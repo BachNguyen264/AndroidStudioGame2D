@@ -1,7 +1,7 @@
 package com.example.androidstudio2dgamedevelopment.gameobject;
 
 import android.content.Context;
-import android.support.v4.content.ContextCompat;
+import androidx.core.content.ContextCompat;
 
 import com.example.androidstudio2dgamedevelopment.GameLoop;
 import com.example.androidstudio2dgamedevelopment.R;
