@@ -2,6 +2,7 @@ package com.example.androidstudio2dgamedevelopment;
 
 import android.app.Activity;
 import android.content.Context;
+import android.content.Intent;
 import android.graphics.Canvas;
 import android.util.DisplayMetrics;
 import android.util.Log;
@@ -75,7 +76,21 @@ class Game extends SurfaceView implements SurfaceHolder.Callback {
 
     @Override
     public boolean onTouchEvent(MotionEvent event) {
+        //Game Over
+        if (player.getHealthPoint() <= 0) {
+            if (event.getAction() == MotionEvent.ACTION_DOWN) {
+                float x = event.getX();
+                float y = event.getY();
 
+                if (gameOver.isRestartPressed(x, y)) {
+                    //restartGame(); // viết hàm reset lại Player, Enemy, Score
+                } else if (gameOver.isMenuPressed(x, y)) {
+                    Intent intent = new Intent(getContext(), MenuActivity.class);
+                    getContext().startActivity(intent);
+                }
+            }
+            return true;
+        }
         // Handle user input touch event actions
         switch (event.getActionMasked()) {
             case MotionEvent.ACTION_DOWN:
