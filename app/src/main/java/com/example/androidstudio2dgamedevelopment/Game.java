@@ -46,7 +46,11 @@ class Game extends SurfaceView implements SurfaceHolder.Callback {
 
     public Game(Context context) {
         super(context);
-
+        //get screen size
+        DisplayMetrics displayMetrics = new DisplayMetrics();
+        ((Activity) getContext()).getWindowManager().getDefaultDisplay().getMetrics(displayMetrics);
+        int screenWidth = displayMetrics.widthPixels;
+        int screenHeight = displayMetrics.heightPixels;
         // Get surface holder and add callback
         SurfaceHolder surfaceHolder = getHolder();
         surfaceHolder.addCallback(this);
@@ -55,8 +59,8 @@ class Game extends SurfaceView implements SurfaceHolder.Callback {
 
         // Initialize game panels
         performance = new Performance(context, gameLoop);
-        gameOver = new GameOver(context);
-        joystick = new Joystick(275, 700, 70, 40);
+        gameOver = new GameOver(context,screenWidth,screenHeight);
+        joystick = new Joystick(275, 800, 125, 75);
 
         // Initialize game objects
         SpriteSheet spriteSheet = new SpriteSheet(context);
@@ -64,9 +68,7 @@ class Game extends SurfaceView implements SurfaceHolder.Callback {
         player = new Player(context, joystick, 2*500, 500, 32, animator);
 
         // Initialize display and center it around the player
-        DisplayMetrics displayMetrics = new DisplayMetrics();
-        ((Activity) getContext()).getWindowManager().getDefaultDisplay().getMetrics(displayMetrics);
-        gameDisplay = new GameDisplay(displayMetrics.widthPixels, displayMetrics.heightPixels, player);
+        gameDisplay = new GameDisplay(screenWidth, screenHeight, player);
 
         // Initialize Tilemap
         tilemap = new Tilemap(spriteSheet);

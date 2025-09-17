@@ -2,6 +2,7 @@ package com.example.androidstudio2dgamedevelopment.gamepanel;
 
 import android.content.Context;
 import android.graphics.Canvas;
+import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Rect;
 
@@ -18,35 +19,70 @@ public class GameOver {
     private Context context;
     private Rect restartButton;
     private Rect menuButton;
-    private Paint paint;
-    public GameOver(Context context) {
-        this.context = context;
-        paint = new Paint();
+    private int screenWidth, screenHeight;
+    private Paint buttonPaint, textPaint, titlePaint;
 
-        // Tạo 2 button (toạ độ tuỳ chỉnh cho hợp màn hình)
-        restartButton = new Rect(600, 400, 1000, 550); // x1,y1,x2,y2
-        menuButton = new Rect(600, 600, 1000, 750);
+    public GameOver(Context context, int screenWidth, int screenHeight) {
+        this.context = context;
+        this.screenWidth = screenWidth;
+        this.screenHeight = screenHeight;
+
+        // Paint cho button
+        buttonPaint = new Paint();
+        buttonPaint.setColor(Color.DKGRAY);
+
+        // Paint cho chữ trong button
+        textPaint = new Paint();
+        textPaint.setColor(Color.WHITE);
+        textPaint.setTextSize(60);
+        textPaint.setTextAlign(Paint.Align.CENTER);
+
+        // Paint cho tiêu đề "Game Over"
+        titlePaint = new Paint();
+        titlePaint.setColor(Color.RED);
+        titlePaint.setTextSize(150);
+        titlePaint.setTextAlign(Paint.Align.CENTER);
+
+        // Kích thước button theo màn hình
+        int buttonWidth = screenWidth / 4;
+        int buttonHeight = screenHeight / 8;
+        int centerX = screenWidth / 2;
+
+        // Restart button (căn giữa, nằm giữa màn hình)
+        restartButton = new Rect(
+                centerX - buttonWidth/2,
+                screenHeight/2,
+                centerX + buttonWidth/2,
+                screenHeight/2 + buttonHeight
+        );
+
+        // Menu button (căn giữa, nằm dưới restart 1 khoảng)
+        menuButton = new Rect(
+                centerX - buttonWidth/2,
+                screenHeight/2 + buttonHeight + 50,
+                centerX + buttonWidth/2,
+                screenHeight/2 + 2*buttonHeight + 50
+        );
     }
 
     public void draw(Canvas canvas) {
-        // Vẽ chữ Game Over
-        String text = "Game Over";
-        paint.setColor(ContextCompat.getColor(context, R.color.gameOver));
-        paint.setTextSize(150);
-        canvas.drawText(text, 800, 200, paint);
+        // Vẽ tiêu đề "Game Over"
+        canvas.drawText("Game Over", screenWidth / 2, screenHeight / 3, titlePaint);
 
         // Vẽ button Restart
-        paint.setColor(ContextCompat.getColor(context, R.color.gameOver));
-        canvas.drawRect(restartButton, paint);
-        paint.setColor(ContextCompat.getColor(context, R.color.white));
-        paint.setTextSize(60);
-        canvas.drawText("Restart", restartButton.left + 50, restartButton.centerY() + 20, paint);
+        canvas.drawRect(restartButton, buttonPaint);
+        drawCenteredText(canvas, restartButton, "Restart", textPaint);
 
         // Vẽ button Menu
-        paint.setColor(ContextCompat.getColor(context, R.color.colorPrimary));
-        canvas.drawRect(menuButton, paint);
-        paint.setColor(ContextCompat.getColor(context, R.color.white));
-        canvas.drawText("Menu", menuButton.left + 80, menuButton.centerY() + 20, paint);
+        canvas.drawRect(menuButton, buttonPaint);
+        drawCenteredText(canvas, menuButton, "Menu", textPaint);
+    }
+
+    // Hàm hỗ trợ vẽ text căn giữa trong rect
+    private void drawCenteredText(Canvas canvas, Rect rect, String text, Paint paint) {
+        Paint.FontMetrics fm = paint.getFontMetrics();
+        float centerY = rect.centerY() - (fm.ascent + fm.descent) / 2;
+        canvas.drawText(text, rect.centerX(), centerY, paint);
     }
 
     public boolean isRestartPressed(float x, float y) {
