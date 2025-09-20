@@ -72,6 +72,17 @@ public class Player extends Circle {
             this.healthPoints = healthPoints;
     }
 
+    // Reset toàn bộ trạng thái player
+    public void reset(double startX, double startY) {
+        this.positionX = startX;
+        this.positionY = startY;
+        this.healthPoints = MAX_HEALTH_POINTS;
+        this.velocityX = 0;
+        this.velocityY = 0;
+        this.directionX = 1; // hướng mặc định (tùy bạn chọn)
+        this.directionY = 0;
+    }
+
     public PlayerState getPlayerState() {
         return playerState;
     }

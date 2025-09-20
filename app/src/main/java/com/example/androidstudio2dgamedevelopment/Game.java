@@ -4,6 +4,10 @@ import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Canvas;
+import android.media.AudioAttributes;
+import android.media.AudioManager;
+import android.media.SoundPool;
+import android.os.Build;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.Display;
@@ -11,6 +15,7 @@ import android.view.MotionEvent;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 
+import com.example.androidstudio2dgamedevelopment.audio.SoundManager;
 import com.example.androidstudio2dgamedevelopment.gameobject.Circle;
 import com.example.androidstudio2dgamedevelopment.gameobject.Enemy;
 import com.example.androidstudio2dgamedevelopment.gameobject.Player;
@@ -43,6 +48,7 @@ class Game extends SurfaceView implements SurfaceHolder.Callback {
     private GameOver gameOver;
     private Performance performance;
     private GameDisplay gameDisplay;
+    private SoundManager soundManager;
 
     public Game(Context context) {
         super(context);
@@ -73,6 +79,9 @@ class Game extends SurfaceView implements SurfaceHolder.Callback {
         // Initialize Tilemap
         tilemap = new Tilemap(spriteSheet);
 
+        // Initialize SoundManager
+        soundManager = new SoundManager(context);
+
         setFocusable(true);
     }
 
@@ -85,7 +94,7 @@ class Game extends SurfaceView implements SurfaceHolder.Callback {
                 float y = event.getY();
 
                 if (gameOver.isRestartPressed(x, y)) {
-                    //restartGame(); // viết hàm reset lại Player, Enemy, Score
+                    restartGame(); // viết hàm reset lại Player, Enemy, Score
                 } else if (gameOver.isMenuPressed(x, y)) {
                     Intent intent = new Intent(getContext(), MenuActivity.class);
                     getContext().startActivity(intent);
@@ -148,6 +157,9 @@ class Game extends SurfaceView implements SurfaceHolder.Callback {
     @Override
     public void surfaceDestroyed(SurfaceHolder holder) {
         Log.d("Game.java", "surfaceDestroyed()");
+        if (soundManager != null) {
+            soundManager.release();
+        }
     }
 
     @Override
@@ -201,6 +213,8 @@ class Game extends SurfaceView implements SurfaceHolder.Callback {
         // Update states of all spells
         while (numberOfSpellsToCast > 0) {
             spellList.add(new Spell(getContext(), player));
+            // Phát âm thanh bắn
+            soundManager.play(SoundManager.SOUND_SHOOT);
             numberOfSpellsToCast --;
         }
         for (Spell spell : spellList) {
@@ -216,6 +230,8 @@ class Game extends SurfaceView implements SurfaceHolder.Callback {
                 // Remove enemy if it collides with the player
                 iteratorEnemy.remove();
                 player.setHealthPoint(player.getHealthPoint() - 1);
+                // Phát âm thanh bị hit
+                soundManager.play(SoundManager.SOUND_HIT);
                 continue;
             }
 
@@ -235,7 +251,25 @@ class Game extends SurfaceView implements SurfaceHolder.Callback {
         // game coordinates
         gameDisplay.update();
     }
+    public void restartGame() {
+        // Reset Joystick
+        joystick.resetActuator();
+        joystick.setIsPressed(false);
 
+        // Reset player về trạng thái ban đầu
+        player.reset(2 * 500, 500);
+
+        // Xoá kẻ địch và phép
+        enemyList.clear();
+        spellList.clear();
+        numberOfSpellsToCast = 0;
+
+        // Cập nhật lại camera
+        gameDisplay.update();
+
+        // Nếu có score thì reset luôn
+        // score = 0;
+    }
     public void pause() {
         gameLoop.stopLoop();
     }
