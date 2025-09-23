@@ -1,6 +1,9 @@
 package com.example.androidstudio2dgamedevelopment.graphics;
 
+import android.graphics.Bitmap;
 import android.graphics.Canvas;
+import android.graphics.Matrix;
+import android.graphics.Rect;
 
 import com.example.androidstudio2dgamedevelopment.GameDisplay;
 import com.example.androidstudio2dgamedevelopment.gameobject.Player;
@@ -46,10 +49,25 @@ public class PlayerAnimator {
     }
 
     public void drawFrame(Canvas canvas, GameDisplay gameDisplay, Player player, Sprite sprite) {
-        sprite.draw(
-                canvas,
-                (int) gameDisplay.gameToDisplayCoordinatesX(player.getPositionX()) - sprite.getWidth()/2,
-                (int) gameDisplay.gameToDisplayCoordinatesY(player.getPositionY()) - sprite.getHeight()/2
-        );
+        int drawX = (int) gameDisplay.gameToDisplayCoordinatesX(player.getPositionX()) - sprite.getWidth()/2;
+        int drawY = (int) gameDisplay.gameToDisplayCoordinatesY(player.getPositionY()) - sprite.getHeight()/2;
+
+        Bitmap originalBitmap = sprite.getBitmap();
+        Rect src = sprite.getRect();
+
+        if (player.isFacingRight()) {
+            // Lật ngang bằng Matrix
+            Matrix matrix = new Matrix();
+            matrix.preScale(-1, 1);
+            // Dịch chuyển để đúng vị trí
+            matrix.postTranslate(drawX + sprite.getWidth(), drawY);
+
+            canvas.drawBitmap(originalBitmap, src, new Rect(0, 0, sprite.getWidth(), sprite.getHeight()), null);
+            canvas.drawBitmap(Bitmap.createBitmap(originalBitmap, src.left, src.top, sprite.getWidth(), sprite.getHeight(), matrix, false),
+                    drawX, drawY, null);
+        } else {
+            // Vẽ bình thường
+            sprite.draw(canvas, drawX, drawY);
+        }
     }
 }

@@ -31,5 +31,12 @@ public class Sprite {
         return rect.height();
     }
 
+    public Rect getRect() {
+        return rect;
+    }
+
+    public Bitmap getBitmap() {
+        return spriteSheet.getBitmap();
+    }
 
 }

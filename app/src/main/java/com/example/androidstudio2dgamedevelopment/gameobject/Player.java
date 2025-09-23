@@ -25,6 +25,7 @@ public class Player extends Circle {
     private int healthPoints = MAX_HEALTH_POINTS;
     private PlayerAnimator playerAnimator;
     private PlayerState playerState;
+    private boolean facingRight = false;
 
     public Player(Context context, Joystick joystick, double positionX, double positionY, double radius, PlayerAnimator playerAnimator) {
         super(context, ContextCompat.getColor(context, R.color.player), positionX, positionY, radius);
@@ -50,6 +51,12 @@ public class Player extends Circle {
             double distance = Utils.getDistanceBetweenPoints(0, 0, velocityX, velocityY);
             directionX = velocityX/distance;
             directionY = velocityY/distance;
+        }
+        //facing
+        if (velocityX > 0) {
+            facingRight = true;
+        } else if (velocityX < 0) {
+            facingRight = false;
         }
 
         playerState.update();
@@ -84,5 +91,8 @@ public class Player extends Circle {
 
     public PlayerState getPlayerState() {
         return playerState;
+    }
+    public boolean isFacingRight() {
+        return facingRight;
     }
 }
