@@ -61,8 +61,6 @@ public class PlayerAnimator {
             matrix.preScale(-1, 1);
             // Dịch chuyển để đúng vị trí
             matrix.postTranslate(drawX + sprite.getWidth(), drawY);
-
-            canvas.drawBitmap(originalBitmap, src, new Rect(0, 0, sprite.getWidth(), sprite.getHeight()), null);
             canvas.drawBitmap(Bitmap.createBitmap(originalBitmap, src.left, src.top, sprite.getWidth(), sprite.getHeight(), matrix, false),
                     drawX, drawY, null);
         } else {

@@ -5,6 +5,8 @@ import android.app.Activity;
 import android.os.Bundle;
 import android.util.Log;
 
+import com.example.androidstudio2dgamedevelopment.audio.MusicManager;
+
 /**
  * MainActivity is the entry point to our application.
  */
@@ -31,6 +33,7 @@ public class MainActivity extends Activity {
     @Override
     protected void onResume() {
         Log.d("MainActivity.java", "onResume()");
+        MusicManager.playBackgroundMusic(this, R.raw.bg_music);
         super.onResume();
     }
 
@@ -38,6 +41,7 @@ public class MainActivity extends Activity {
     protected void onPause() {
         Log.d("MainActivity.java", "onPause()");
         game.pause();
+        MusicManager.pause();
         super.onPause();
     }
 
@@ -50,6 +54,7 @@ public class MainActivity extends Activity {
     @Override
     protected void onDestroy() {
         Log.d("MainActivity.java", "onDestroy()");
+        MusicManager.stop();
         super.onDestroy();
     }
 
