@@ -4,19 +4,17 @@ import android.graphics.Canvas;
 
 import com.example.androidstudio2dgamedevelopment.GameDisplay;
 import com.example.androidstudio2dgamedevelopment.gameobject.Player;
-import com.example.androidstudio2dgamedevelopment.gameobject.PlayerState;
 
-public class Animator {
+public class PlayerAnimator {
     private Sprite[] playerSpriteArray;
     private int idxNotMovingFrame = 0;
     private int idxMovingFrame = 1;
     private int updatesBeforeNextMoveFrame;
     private static final int MAX_UPDATES_BEFORE_NEXT_MOVE_FRAME = 5;
 
-    public Animator(Sprite[] playerSpriteArray) {
+    public PlayerAnimator(Sprite[] playerSpriteArray) {
         this.playerSpriteArray = playerSpriteArray;
     }
-
 
     public void draw(Canvas canvas, GameDisplay gameDisplay, Player player) {
         switch (player.getPlayerState().getState()) {
@@ -41,10 +39,10 @@ public class Animator {
     }
 
     private void toggleIdxMovingFrame() {
-        if(idxMovingFrame == 1)
-            idxMovingFrame = 2;
-        else
-            idxMovingFrame = 1;
+        idxMovingFrame++;
+        if (idxMovingFrame >= 5) { // tổng cộng 4 frame
+            idxMovingFrame = 1;    // quay lại frame 1 (frame 0 để đứng yên)
+        }
     }
 
     public void drawFrame(Canvas canvas, GameDisplay gameDisplay, Player player, Sprite sprite) {

@@ -4,13 +4,8 @@ import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Canvas;
-import android.media.AudioAttributes;
-import android.media.AudioManager;
-import android.media.SoundPool;
-import android.os.Build;
 import android.util.DisplayMetrics;
 import android.util.Log;
-import android.view.Display;
 import android.view.MotionEvent;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
@@ -23,7 +18,9 @@ import com.example.androidstudio2dgamedevelopment.gameobject.Spell;
 import com.example.androidstudio2dgamedevelopment.gamepanel.GameOver;
 import com.example.androidstudio2dgamedevelopment.gamepanel.Joystick;
 import com.example.androidstudio2dgamedevelopment.gamepanel.Performance;
-import com.example.androidstudio2dgamedevelopment.graphics.Animator;
+import com.example.androidstudio2dgamedevelopment.graphics.PlayerAnimator;
+import com.example.androidstudio2dgamedevelopment.graphics.SimpleAnimator;
+import com.example.androidstudio2dgamedevelopment.graphics.Sprite;
 import com.example.androidstudio2dgamedevelopment.graphics.SpriteSheet;
 import com.example.androidstudio2dgamedevelopment.map.Tilemap;
 
@@ -43,6 +40,7 @@ class Game extends SurfaceView implements SurfaceHolder.Callback {
     private final Player player;
     private GameLoop gameLoop;
     private List<Enemy> enemyList = new ArrayList<Enemy>();
+    private Sprite[] enemySprites;
     private List<Spell> spellList = new ArrayList<Spell>();
     private int numberOfSpellsToCast = 0;
     private GameOver gameOver;
@@ -70,8 +68,10 @@ class Game extends SurfaceView implements SurfaceHolder.Callback {
 
         // Initialize game objects
         SpriteSheet spriteSheet = new SpriteSheet(context);
-        Animator animator = new Animator(spriteSheet.getPlayerSpriteArray());
-        player = new Player(context, joystick, 2*500, 500, 32, animator);
+        PlayerAnimator playerAnimator = new PlayerAnimator(spriteSheet.getPlayerSpriteArray());
+        player = new Player(context, joystick, 2*500, 500, 32, playerAnimator);
+
+        enemySprites = spriteSheet.getEnemySpriteArray();
 
         // Initialize display and center it around the player
         gameDisplay = new GameDisplay(screenWidth, screenHeight, player);
@@ -202,7 +202,7 @@ class Game extends SurfaceView implements SurfaceHolder.Callback {
 
         // Spawn enemy
         if(Enemy.readyToSpawn()) {
-            enemyList.add(new Enemy(getContext(), player));
+            enemyList.add(new Enemy(getContext(), player,new SimpleAnimator(enemySprites, 5)));
         }
 
         // Update states of all enemies

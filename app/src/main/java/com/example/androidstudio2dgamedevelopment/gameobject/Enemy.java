@@ -1,10 +1,14 @@
 package com.example.androidstudio2dgamedevelopment.gameobject;
 
 import android.content.Context;
+import android.graphics.Canvas;
+
 import androidx.core.content.ContextCompat;
 
+import com.example.androidstudio2dgamedevelopment.GameDisplay;
 import com.example.androidstudio2dgamedevelopment.GameLoop;
 import com.example.androidstudio2dgamedevelopment.R;
+import com.example.androidstudio2dgamedevelopment.graphics.SimpleAnimator;
 
 /**
  * Enemy is a character which always moves in the direction of the player.
@@ -19,10 +23,12 @@ public class Enemy extends Circle {
     private static final double UPDATES_PER_SPAWN = GameLoop.MAX_UPS/SPAWNS_PER_SECOND;
     private static double updatesUntilNextSpawn = UPDATES_PER_SPAWN;
     private Player player;
+    private SimpleAnimator animator;   // 🎯 thêm animator
 
-    public Enemy(Context context, Player player, double positionX, double positionY, double radius) {
+    public Enemy(Context context, Player player, double positionX, double positionY, double radius, SimpleAnimator animator) {
         super(context, ContextCompat.getColor(context, R.color.enemy), positionX, positionY, radius);
         this.player = player;
+        this.animator = animator;
     }
 
     /**
@@ -30,7 +36,7 @@ public class Enemy extends Circle {
      * @param context
      * @param player
      */
-    public Enemy(Context context, Player player) {
+    public Enemy(Context context, Player player, SimpleAnimator animator) {
         super(
             context,
             ContextCompat.getColor(context, R.color.enemy),
@@ -39,6 +45,7 @@ public class Enemy extends Circle {
      30
         );
         this.player = player;
+        this.animator = animator;
     }
 
     /**
@@ -85,6 +92,14 @@ public class Enemy extends Circle {
         // =========================================================================================
         positionX += velocityX;
         positionY += velocityY;
+    }
+
+    public void draw(Canvas canvas, GameDisplay gameDisplay) {
+        if (animator != null) {
+            animator.draw(canvas, gameDisplay, this);
+        } else {
+            super.draw(canvas, gameDisplay); // fallback nếu chưa có sprite
+        }
     }
 }
 

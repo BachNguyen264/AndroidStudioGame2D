@@ -19,10 +19,22 @@ public class SpriteSheet {
     }
 
     public Sprite[] getPlayerSpriteArray() {
-        Sprite[] spriteArray = new Sprite[3];
-        spriteArray[0] = new Sprite(this, new Rect(0*64, 0, 1*64, 64));
-        spriteArray[1] = new Sprite(this, new Rect(1*64, 0, 2*64, 64));
-        spriteArray[2] = new Sprite(this, new Rect(2*64, 0, 3*64, 64));
+        Sprite[] spriteArray = new Sprite[5];
+        spriteArray[0] = getSpriteByIndex(0,0);
+        spriteArray[1] = getSpriteByIndex(0,1);
+        spriteArray[2] = getSpriteByIndex(0,2);
+        spriteArray[3] = getSpriteByIndex(0,3);
+        spriteArray[4] = getSpriteByIndex(0,4);
+        return spriteArray;
+    }
+
+    public Sprite[] getEnemySpriteArray() {
+        Sprite[] spriteArray = new Sprite[5];
+        spriteArray[0] = getSpriteByIndex(2,0);
+        spriteArray[1] = getSpriteByIndex(2,1);
+        spriteArray[2] = getSpriteByIndex(2,2);
+        spriteArray[3] = getSpriteByIndex(2,3);
+        spriteArray[4] = getSpriteByIndex(2,4);
         return spriteArray;
     }
 
