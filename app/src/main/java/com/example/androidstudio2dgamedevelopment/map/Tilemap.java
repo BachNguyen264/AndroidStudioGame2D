@@ -72,4 +72,13 @@ public class Tilemap {
                 null
         );
     }
+
+    public int getMapWidth() {
+        return MapLayout.NUMBER_OF_COLUMN_TILES * MapLayout.TILE_WIDTH_PIXELS;
+    }
+
+    public int getMapHeight() {
+        return MapLayout.NUMBER_OF_ROW_TILES * MapLayout.TILE_HEIGHT_PIXELS;
+    }
+
 }

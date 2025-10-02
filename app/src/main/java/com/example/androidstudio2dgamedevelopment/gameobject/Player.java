@@ -2,6 +2,8 @@ package com.example.androidstudio2dgamedevelopment.gameobject;
 
 import android.content.Context;
 import android.graphics.Canvas;
+import android.graphics.Paint;
+
 import androidx.core.content.ContextCompat;
 
 import com.example.androidstudio2dgamedevelopment.GameDisplay;
@@ -27,12 +29,23 @@ public class Player extends Circle {
     private PlayerState playerState;
     private boolean facingRight = false;
 
+    // Shield properties
+    private boolean isShieldActive = false;
+    private long shieldEndTimeMs = 0;
+    private Paint shieldPaint; // For drawing shield indicator
+
     public Player(Context context, Joystick joystick, double positionX, double positionY, double radius, PlayerAnimator playerAnimator) {
         super(context, ContextCompat.getColor(context, R.color.player), positionX, positionY, radius);
         this.joystick = joystick;
         this.healthBar = new HealthBar(context, this);
         this.playerAnimator = playerAnimator;
         this.playerState = new PlayerState(this);
+
+        // Initialize shield paint
+        shieldPaint = new Paint();
+        shieldPaint.setColor(ContextCompat.getColor(context, R.color.shieldActiveColor)); // Define this color
+        shieldPaint.setStyle(Paint.Style.STROKE);
+        shieldPaint.setStrokeWidth(10); // Adjust as needed
     }
 
     public void update() {
@@ -59,6 +72,11 @@ public class Player extends Circle {
             facingRight = false;
         }
 
+        // Shield countdown
+        if (isShieldActive && System.currentTimeMillis() > shieldEndTimeMs) {
+            deactivateShield();
+        }
+
         playerState.update();
     }
 
@@ -66,6 +84,16 @@ public class Player extends Circle {
         playerAnimator.draw(canvas, gameDisplay, this);
 
         healthBar.draw(canvas, gameDisplay);
+        // Draw shield indicator if active
+        if (isShieldActive) {
+            // Calculate screen coordinates for the player
+            float screenX = (float) gameDisplay.gameToDisplayCoordinatesX(getPositionX());
+            float screenY = (float) gameDisplay.gameToDisplayCoordinatesY(getPositionY());
+            // Adjust radius for display if necessary, or use a fixed size for the shield indicator
+            float displayRadius = (float) (radius * 1.2); // Make shield slightly larger than player
+
+            canvas.drawCircle(screenX, screenY, displayRadius, shieldPaint);
+        }
     }
 
     public int getHealthPoint() {
@@ -73,9 +101,40 @@ public class Player extends Circle {
     }
 
     public void setHealthPoint(int healthPoints) {
+        if (isShieldActive) { // If shield is active, player doesn't lose health
+            return;
+        }
         // Only allow positive values
         if (healthPoints >= 0)
             this.healthPoints = healthPoints;
+    }
+
+    // Call this method when player collides with an enemy
+    public void takeDamage(int damageAmount) {
+        if (!isShieldActive) {
+            setHealthPoint(getHealthPoint() - damageAmount);
+        }
+        // If you want shield to absorb one hit and then deactivate:
+        /*
+        if (isShieldActive) {
+            deactivateShield();
+        } else {
+            setHealthPoint(getHealthPoint() - damageAmount);
+        }
+        */
+    }
+
+    public void activateShield(long durationMs) {
+        isShieldActive = true;
+        shieldEndTimeMs = System.currentTimeMillis() + durationMs;
+    }
+
+    private void deactivateShield() {
+        isShieldActive = false;
+    }
+
+    public boolean isShieldActive() {
+        return isShieldActive;
     }
 
     // Reset toàn bộ trạng thái player

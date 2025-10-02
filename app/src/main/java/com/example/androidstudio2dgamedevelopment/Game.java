@@ -13,8 +13,15 @@ import android.view.SurfaceView;
 import com.example.androidstudio2dgamedevelopment.audio.SoundManager;
 import com.example.androidstudio2dgamedevelopment.gameobject.Circle;
 import com.example.androidstudio2dgamedevelopment.gameobject.Enemy;
+import com.example.androidstudio2dgamedevelopment.gameobject.Fireball;
+import com.example.androidstudio2dgamedevelopment.gameobject.Freeze;
+import com.example.androidstudio2dgamedevelopment.gameobject.HealthBoost;
+import com.example.androidstudio2dgamedevelopment.gameobject.Item;
+import com.example.androidstudio2dgamedevelopment.gameobject.Missile;
 import com.example.androidstudio2dgamedevelopment.gameobject.Player;
+import com.example.androidstudio2dgamedevelopment.gameobject.Shield;
 import com.example.androidstudio2dgamedevelopment.gameobject.Spell;
+import com.example.androidstudio2dgamedevelopment.gamepanel.Attack;
 import com.example.androidstudio2dgamedevelopment.gamepanel.GameOver;
 import com.example.androidstudio2dgamedevelopment.gamepanel.Joystick;
 import com.example.androidstudio2dgamedevelopment.gamepanel.Performance;
@@ -27,6 +34,7 @@ import com.example.androidstudio2dgamedevelopment.map.Tilemap;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Random;
 
 /**
  * Game manages all objects in the game and is responsible for updating all states and render all
@@ -37,16 +45,31 @@ class Game extends SurfaceView implements SurfaceHolder.Callback {
     private final Tilemap tilemap;
     private int joystickPointerId = 0;
     private final Joystick joystick;
+    private final Attack attack; // Add attack button panel
     private final Player player;
     private GameLoop gameLoop;
     private List<Enemy> enemyList = new ArrayList<Enemy>();
     private Sprite[] enemySprites;
     private List<Spell> spellList = new ArrayList<Spell>();
-    private int numberOfSpellsToCast = 0;
+    private int normalSpellsToCast = 0; // Spells for main button
+    private int fireballsToCast = 0;    // Spells for skill button 1
+    private int missilesToCast = 0;   // Spells for skill button 2
     private GameOver gameOver;
     private Performance performance;
     private GameDisplay gameDisplay;
     private SoundManager soundManager;
+
+    // Item related variables
+    private List<Item> itemList = new ArrayList<Item>();
+    private Random random = new Random();
+    private long nextItemSpawnTime = 0;
+    private static final long ITEM_SPAWN_INTERVAL_MIN_MS = 1000; // Spawn item every 10-20 seconds
+    private static final long ITEM_SPAWN_INTERVAL_MAX_MS = 5000;
+    private static final double ITEM_RADIUS = 20; // Adjust as needed
+
+    // Freeze related variables
+    private boolean isEnemiesFrozen = false;
+    private long freezeEndTimeMs = 0;
 
     public Game(Context context) {
         super(context);
@@ -65,6 +88,7 @@ class Game extends SurfaceView implements SurfaceHolder.Callback {
         performance = new Performance(context, gameLoop);
         gameOver = new GameOver(context,screenWidth,screenHeight);
         joystick = new Joystick(275, 800, 125, 75);
+        attack = new Attack(screenWidth - 275, 800); // Position attack button on the right
 
         // Initialize game objects
         SpriteSheet spriteSheet = new SpriteSheet(context);
@@ -81,8 +105,15 @@ class Game extends SurfaceView implements SurfaceHolder.Callback {
 
         // Initialize SoundManager
         soundManager = new SoundManager(context);
-
         setFocusable(true);
+
+        // Initialize next item spawn time
+        setNextItemSpawnTime();
+    }
+
+    private void setNextItemSpawnTime() {
+        nextItemSpawnTime = System.currentTimeMillis() + ITEM_SPAWN_INTERVAL_MIN_MS +
+                random.nextInt((int) (ITEM_SPAWN_INTERVAL_MAX_MS - ITEM_SPAWN_INTERVAL_MIN_MS + 1));
     }
 
     @Override
@@ -103,34 +134,56 @@ class Game extends SurfaceView implements SurfaceHolder.Callback {
             return true;
         }
         // Handle user input touch event actions
-        switch (event.getActionMasked()) {
+        int action = event.getActionMasked();
+        int pointerIndex = event.getActionIndex();
+        int pointerId = event.getPointerId(pointerIndex);
+        float x = event.getX(pointerIndex);
+        float y = event.getY(pointerIndex);
+
+        switch (action) {
             case MotionEvent.ACTION_DOWN:
             case MotionEvent.ACTION_POINTER_DOWN:
-                if (joystick.getIsPressed()) {
-                    // Joystick was pressed before this event -> cast spell
-                    numberOfSpellsToCast ++;
-                } else if (joystick.isPressed((double) event.getX(), (double) event.getY())) {
-                    // Joystick is pressed in this event -> setIsPressed(true) and store pointer id
-                    joystickPointerId = event.getPointerId(event.getActionIndex());
+                // Check if a button is pressed
+                if (joystick.isPressed(x, y)) {
+                    joystickPointerId = pointerId;
                     joystick.setIsPressed(true);
-                } else {
-                    // Joystick was not previously, and is not pressed in this event -> cast spell
-                    numberOfSpellsToCast ++;
+                } else if (attack.isMainButtonPressed(x, y)) {
+                    attack.setIsMainButtonPressed(true, pointerId);
+                    normalSpellsToCast++;
+                } else if (attack.isSkillButton1Pressed(x, y)) {
+                    attack.setIsSkillButton1Pressed(true, pointerId);
+                    fireballsToCast++;
+                } else if (attack.isSkillButton2Pressed(x, y)) {
+                    attack.setIsSkillButton2Pressed(true, pointerId);
+                    missilesToCast++; // Logic for missile can be added here
                 }
                 return true;
+
             case MotionEvent.ACTION_MOVE:
+                // If joystick is pressed, update its actuator
                 if (joystick.getIsPressed()) {
-                    // Joystick was pressed previously and is now moved
-                    joystick.setActuator((double) event.getX(), (double) event.getY());
+                    // Find the pointer associated with the joystick
+                    for (int i = 0; i < event.getPointerCount(); i++) {
+                        if (joystickPointerId == event.getPointerId(i)) {
+                            joystick.setActuator(event.getX(i), event.getY(i));
+                            break;
+                        }
+                    }
                 }
                 return true;
 
             case MotionEvent.ACTION_UP:
             case MotionEvent.ACTION_POINTER_UP:
-                if (joystickPointerId == event.getPointerId(event.getActionIndex())) {
-                    // joystick pointer was let go off -> setIsPressed(false) and resetActuator()
+                // Check which pointer was lifted
+                if (joystickPointerId == pointerId) {
                     joystick.setIsPressed(false);
                     joystick.resetActuator();
+                } else if (attack.getMainButtonPointerId() == pointerId) {
+                    attack.setIsMainButtonPressed(false, -1);
+                } else if (attack.getSkillButton1PointerId() == pointerId) {
+                    attack.setIsSkillButton1Pressed(false, -1);
+                } else if (attack.getSkillButton2PointerId() == pointerId) {
+                    attack.setIsSkillButton2Pressed(false, -1);
                 }
                 return true;
         }
@@ -180,11 +233,21 @@ class Game extends SurfaceView implements SurfaceHolder.Callback {
             spell.draw(canvas, gameDisplay);
         }
 
+        // Draw items
+        for (Item item : itemList) {
+            item.draw(canvas, gameDisplay);
+        }
+
         // Draw game panels
         joystick.draw(canvas);
+        attack.draw(canvas); // Draw the attack buttons
         performance.draw(canvas);
 
         // Draw Game over if the player is dead
+        // This needs to be last draw call so it's drawn on top of all other objects
+        // Hide Joystick and Attack buttons when game over
+        // Show restart button
+        // Show menu button
         if (player.getHealthPoint() <= 0) {
             gameOver.draw(canvas);
         }
@@ -205,18 +268,64 @@ class Game extends SurfaceView implements SurfaceHolder.Callback {
             enemyList.add(new Enemy(getContext(), player,new SimpleAnimator(enemySprites, 5)));
         }
 
+        // Spawn items
+        if (System.currentTimeMillis() >= nextItemSpawnTime) {
+            double mapWidth = tilemap.getMapWidth();
+            double mapHeight = tilemap.getMapHeight();
+
+            double itemX = random.nextDouble() * (mapWidth - 2 * ITEM_RADIUS) + ITEM_RADIUS;
+            double itemY = random.nextDouble() * (mapHeight - 2 * ITEM_RADIUS) + ITEM_RADIUS;
+
+            Item.ItemType type = Item.ItemType.getRandomType();
+            Item newItem = null;
+
+            switch (type) {
+                case HEALTH_BOOST:
+                    newItem = new HealthBoost(getContext(), itemX, itemY, ITEM_RADIUS);
+                    break;
+                case SHIELD:
+                    newItem = new Shield(getContext(), itemX, itemY, ITEM_RADIUS);
+                    break;
+                case FREEZE:
+                    newItem = new Freeze(getContext(), itemX, itemY, ITEM_RADIUS);
+                    break;
+            }
+
+            if (newItem != null) {
+                itemList.add(newItem);
+            }
+
+            setNextItemSpawnTime();
+        }
+
+
         // Update states of all enemies
         for (Enemy enemy : enemyList) {
             enemy.update();
         }
 
-        // Update states of all spells
-        while (numberOfSpellsToCast > 0) {
+        // Cast normal spells from the queue
+        while (normalSpellsToCast > 0) {
             spellList.add(new Spell(getContext(), player));
-            // Phát âm thanh bắn
             soundManager.play(SoundManager.SOUND_SHOOT);
-            numberOfSpellsToCast --;
+            normalSpellsToCast--;
         }
+
+        // Cast fireballs from the queue
+        while (fireballsToCast > 0) {
+            spellList.add(new Fireball(getContext(), player));
+            soundManager.play(SoundManager.SOUND_SHOOT); // You can add a different sound
+            fireballsToCast--;
+        }
+
+        // Cast missile from the queue
+        while (missilesToCast > 0) {
+            spellList.add(new Missile(getContext(), player));
+            soundManager.play(SoundManager.SOUND_SHOOT); // You can add a different sound
+            missilesToCast--;
+        }
+
+        // Update states of all spells
         for (Spell spell : spellList) {
             spell.update();
         }
@@ -229,7 +338,7 @@ class Game extends SurfaceView implements SurfaceHolder.Callback {
             if (Circle.isColliding(enemy, player)) {
                 // Remove enemy if it collides with the player
                 iteratorEnemy.remove();
-                player.setHealthPoint(player.getHealthPoint() - 1);
+                player.takeDamage(1);
                 // Phát âm thanh bị hit
                 soundManager.play(SoundManager.SOUND_HIT);
                 continue;
@@ -246,8 +355,21 @@ class Game extends SurfaceView implements SurfaceHolder.Callback {
                 }
             }
         }
-        
-        // Update gameDisplay so that it's center is set to the new center of the player's 
+
+        // Iterate through itemList and check for collision between each item and the player
+        // Update items and check collision with player
+        Iterator<Item> it = itemList.iterator();
+        while (it.hasNext()) {
+            Item item = it.next();
+            if (!item.isCollected() && Circle.isColliding(item, player)) {
+                item.applyEffect(player);
+                it.remove(); // remove khỏi list sau khi collect
+            }
+        }
+
+
+
+        // Update gameDisplay so that it's center is set to the new center of the player's
         // game coordinates
         gameDisplay.update();
     }
@@ -262,13 +384,21 @@ class Game extends SurfaceView implements SurfaceHolder.Callback {
         // Xoá kẻ địch và phép
         enemyList.clear();
         spellList.clear();
-        numberOfSpellsToCast = 0;
+        normalSpellsToCast = 0;
+        fireballsToCast = 0;
+        missilesToCast = 0;
+        itemList.clear(); // Clear all items
 
         // Cập nhật lại camera
         gameDisplay.update();
 
         // Nếu có score thì reset luôn
         // score = 0;
+
+        // Reset item spawn timer
+        setNextItemSpawnTime();
+        // Reset freeze effect
+        isEnemiesFrozen = false;
     }
     public void pause() {
         gameLoop.stopLoop();

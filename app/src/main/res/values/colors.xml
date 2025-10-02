@@ -11,4 +11,8 @@
     <color name="healthBarBorder">#A0A0A0</color>
     <color name="healthBarHealth">#00FF00</color>
     <color name="gameOver">#FC5245</color>
+    <color name="healthBoostColor">#4CAF50</color>
+    <color name="shieldColor">#2196F3</color>
+    <color name="freezeColor">#050f33</color>
+    <color name="shieldActiveColor">#A0A0A0</color>
 </resources>
