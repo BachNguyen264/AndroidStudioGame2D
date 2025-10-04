@@ -27,6 +27,12 @@
             android:exported="true"> <!-- BẮT BUỘC từ Android 12 -->
         </activity>
 
+        <activity
+            android:name=".HighScoreActivity"
+            android:screenOrientation="landscape"
+            android:theme="@style/Theme.AppCompat.Light.NoActionBar"
+            android:exported="true">
+        </activity>
 
     </application>
 

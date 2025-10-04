@@ -3,6 +3,7 @@ package com.example.androidstudio2dgamedevelopment;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.graphics.Canvas;
 import android.util.DisplayMetrics;
 import android.util.Log;
@@ -23,8 +24,10 @@ import com.example.androidstudio2dgamedevelopment.gameobject.Shield;
 import com.example.androidstudio2dgamedevelopment.gameobject.Spell;
 import com.example.androidstudio2dgamedevelopment.gamepanel.Attack;
 import com.example.androidstudio2dgamedevelopment.gamepanel.GameOver;
+import com.example.androidstudio2dgamedevelopment.gamepanel.GameTimer;
 import com.example.androidstudio2dgamedevelopment.gamepanel.Joystick;
 import com.example.androidstudio2dgamedevelopment.gamepanel.Performance;
+import com.example.androidstudio2dgamedevelopment.gamepanel.Score;
 import com.example.androidstudio2dgamedevelopment.graphics.PlayerAnimator;
 import com.example.androidstudio2dgamedevelopment.graphics.SimpleAnimator;
 import com.example.androidstudio2dgamedevelopment.graphics.Sprite;
@@ -41,7 +44,8 @@ import java.util.Random;
  * objects to the screen
  */
 class Game extends SurfaceView implements SurfaceHolder.Callback {
-
+    private int screenWidth;
+    private int screenHeight;
     private final Tilemap tilemap;
     private int joystickPointerId = 0;
     private final Joystick joystick;
@@ -55,6 +59,10 @@ class Game extends SurfaceView implements SurfaceHolder.Callback {
     private int fireballsToCast = 0;    // Spells for skill button 1
     private int missilesToCast = 0;   // Spells for skill button 2
     private GameOver gameOver;
+    private Score score;
+    private GameTimer gameTimer;
+    private SharedPreferences prefs;
+    private SharedPreferences.Editor editor;
     private Performance performance;
     private GameDisplay gameDisplay;
     private SoundManager soundManager;
@@ -66,6 +74,10 @@ class Game extends SurfaceView implements SurfaceHolder.Callback {
     private static final long ITEM_SPAWN_INTERVAL_MIN_MS = 1000; // Spawn item every 10-20 seconds
     private static final long ITEM_SPAWN_INTERVAL_MAX_MS = 5000;
     private static final double ITEM_RADIUS = 20; // Adjust as needed
+    //Score
+    private static final int ENEMY_SCORE = 10;
+    private static final int ITEM_SCORE = 5;
+    private boolean hasSavedScore = false;
 
     // Freeze related variables
     private boolean isEnemiesFrozen = false;
@@ -76,8 +88,8 @@ class Game extends SurfaceView implements SurfaceHolder.Callback {
         //get screen size
         DisplayMetrics displayMetrics = new DisplayMetrics();
         ((Activity) getContext()).getWindowManager().getDefaultDisplay().getMetrics(displayMetrics);
-        int screenWidth = displayMetrics.widthPixels;
-        int screenHeight = displayMetrics.heightPixels;
+         screenWidth = displayMetrics.widthPixels;
+         screenHeight = displayMetrics.heightPixels;
         // Get surface holder and add callback
         SurfaceHolder surfaceHolder = getHolder();
         surfaceHolder.addCallback(this);
@@ -86,7 +98,9 @@ class Game extends SurfaceView implements SurfaceHolder.Callback {
 
         // Initialize game panels
         performance = new Performance(context, gameLoop);
-        gameOver = new GameOver(context,screenWidth,screenHeight);
+        score = new Score(context, screenWidth / 2 - 200, 100);
+        gameTimer = new GameTimer( screenWidth / 2 + 200, 100);
+        gameOver = new GameOver(context,screenWidth,screenHeight,score.getScore(), gameTimer.getElapsedTimeSeconds());
         joystick = new Joystick(275, 800, 125, 75);
         attack = new Attack(screenWidth - 275, 800); // Position attack button on the right
 
@@ -109,6 +123,9 @@ class Game extends SurfaceView implements SurfaceHolder.Callback {
 
         // Initialize next item spawn time
         setNextItemSpawnTime();
+        // SharedPreferences để lưu High Score
+        prefs = context.getSharedPreferences("HIGH_SCORES", Context.MODE_PRIVATE);
+        editor = prefs.edit();
     }
 
     private void setNextItemSpawnTime() {
@@ -128,6 +145,9 @@ class Game extends SurfaceView implements SurfaceHolder.Callback {
                     restartGame(); // viết hàm reset lại Player, Enemy, Score
                 } else if (gameOver.isMenuPressed(x, y)) {
                     Intent intent = new Intent(getContext(), MenuActivity.class);
+                    getContext().startActivity(intent);
+                } else if (gameOver.isHighScorePressed(x, y)) {
+                    Intent intent = new Intent(getContext(), HighScoreActivity.class);
                     getContext().startActivity(intent);
                 }
             }
@@ -242,13 +262,15 @@ class Game extends SurfaceView implements SurfaceHolder.Callback {
         joystick.draw(canvas);
         attack.draw(canvas); // Draw the attack buttons
         performance.draw(canvas);
+        // Vẽ score + timer
+        score.draw(canvas);
+        gameTimer.draw(canvas);
 
         // Draw Game over if the player is dead
-        // This needs to be last draw call so it's drawn on top of all other objects
-        // Hide Joystick and Attack buttons when game over
-        // Show restart button
-        // Show menu button
         if (player.getHealthPoint() <= 0) {
+            // Cập nhật dữ liệu final cho GameOver
+            gameOver.setFinalScore(score.getScore());
+            gameOver.setFinalTime(gameTimer.getElapsedTimeSeconds());
             gameOver.draw(canvas);
         }
     }
@@ -256,12 +278,18 @@ class Game extends SurfaceView implements SurfaceHolder.Callback {
     public void update() {
         // Stop updating the game if the player is dead
         if (player.getHealthPoint() <= 0) {
+            if (!hasSavedScore) {
+                // Lưu điểm 1 lần duy nhất
+                saveHighScore(score.getScore(),gameTimer.getElapsedTimeSeconds());
+                hasSavedScore = true;
+            }
             return;
         }
 
         // Update game state
         joystick.update();
         player.update();
+        gameTimer.update();
 
         // Spawn enemy
         if(Enemy.readyToSpawn()) {
@@ -351,6 +379,7 @@ class Game extends SurfaceView implements SurfaceHolder.Callback {
                 if (Circle.isColliding(spell, enemy)) {
                     iteratorSpell.remove();
                     iteratorEnemy.remove();
+                    score.addScore(ENEMY_SCORE);
                     break;
                 }
             }
@@ -363,11 +392,10 @@ class Game extends SurfaceView implements SurfaceHolder.Callback {
             Item item = it.next();
             if (!item.isCollected() && Circle.isColliding(item, player)) {
                 item.applyEffect(player);
+                score.addScore(ITEM_SCORE);
                 it.remove(); // remove khỏi list sau khi collect
             }
         }
-
-
 
         // Update gameDisplay so that it's center is set to the new center of the player's
         // game coordinates
@@ -392,14 +420,55 @@ class Game extends SurfaceView implements SurfaceHolder.Callback {
         // Cập nhật lại camera
         gameDisplay.update();
 
-        // Nếu có score thì reset luôn
-        // score = 0;
+        // Reset score & timer
+        score.reset();
+        gameTimer.reset();
 
         // Reset item spawn timer
         setNextItemSpawnTime();
         // Reset freeze effect
         isEnemiesFrozen = false;
     }
+    private void saveHighScore(int newScore, long playTimeMillis) {
+        List<Integer> scores = new ArrayList<>();
+        List<Long> times = new ArrayList<>();
+
+        // Lấy danh sách cũ
+        for (int i = 0; i < 6; i++) {
+            int score = prefs.getInt("SCORE_" + i, -1);
+            long time = prefs.getLong("TIME_" + i, -1);
+            if (score >= 0 && time >= 0) {
+                scores.add(score);
+                times.add(time);
+            }
+        }
+
+        // Thêm điểm + thời gian mới
+        scores.add(newScore);
+        times.add(playTimeMillis);
+
+        // Sắp xếp giảm dần theo điểm
+        List<Integer> sortedIndexes = new ArrayList<>();
+        for (int i = 0; i < scores.size(); i++) sortedIndexes.add(i);
+        sortedIndexes.sort((a, b) -> Integer.compare(scores.get(b), scores.get(a)));
+
+        // Lưu top 6
+        int size = Math.min(6, sortedIndexes.size());
+        for (int i = 0; i < size; i++) {
+            int idx = sortedIndexes.get(i);
+            editor.putInt("SCORE_" + i, scores.get(idx));
+            editor.putLong("TIME_" + i, times.get(idx));
+        }
+
+        // Xóa phần dư nếu có
+        for (int i = size; i < 6; i++) {
+            editor.remove("SCORE_" + i);
+            editor.remove("TIME_" + i);
+        }
+
+        editor.apply();
+    }
+
     public void pause() {
         gameLoop.stopLoop();
     }

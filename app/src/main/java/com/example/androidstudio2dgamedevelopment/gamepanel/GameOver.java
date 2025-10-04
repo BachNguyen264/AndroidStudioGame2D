@@ -6,26 +6,25 @@ import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Rect;
 
-import androidx.core.content.ContextCompat;
-
-import com.example.androidstudio2dgamedevelopment.R;
-
-
 /**
  * GameOver is a panel which draws the text Game Over to the screen.
  */
 public class GameOver {
 
     private Context context;
-    private Rect restartButton;
-    private Rect menuButton;
+    private Rect restartButton, menuButton, highScoreButton;
     private int screenWidth, screenHeight;
-    private Paint buttonPaint, textPaint, titlePaint;
+    private Paint buttonPaint, textPaint, titlePaint, infoPaint;
 
-    public GameOver(Context context, int screenWidth, int screenHeight) {
+    private int finalScore;
+    private long finalTimeSeconds;
+
+    public GameOver(Context context, int screenWidth, int screenHeight, int finalScore, long finalTimeSeconds) {
         this.context = context;
         this.screenWidth = screenWidth;
         this.screenHeight = screenHeight;
+        this.finalScore = finalScore;
+        this.finalTimeSeconds = finalTimeSeconds;
 
         // Paint cho button
         buttonPaint = new Paint();
@@ -43,12 +42,18 @@ public class GameOver {
         titlePaint.setTextSize(150);
         titlePaint.setTextAlign(Paint.Align.CENTER);
 
+        // Paint cho thông tin Score, Time
+        infoPaint = new Paint();
+        infoPaint.setColor(Color.YELLOW);
+        infoPaint.setTextSize(70);
+        infoPaint.setTextAlign(Paint.Align.CENTER);
+
         // Kích thước button theo màn hình
-        int buttonWidth = screenWidth / 4;
-        int buttonHeight = screenHeight / 8;
+        int buttonWidth = screenWidth / 3;
+        int buttonHeight = screenHeight / 10;
         int centerX = screenWidth / 2;
 
-        // Restart button (căn giữa, nằm giữa màn hình)
+        // Restart button
         restartButton = new Rect(
                 centerX - buttonWidth/2,
                 screenHeight/2,
@@ -56,18 +61,33 @@ public class GameOver {
                 screenHeight/2 + buttonHeight
         );
 
-        // Menu button (căn giữa, nằm dưới restart 1 khoảng)
+        // Menu button
         menuButton = new Rect(
                 centerX - buttonWidth/2,
                 screenHeight/2 + buttonHeight + 50,
                 centerX + buttonWidth/2,
                 screenHeight/2 + 2*buttonHeight + 50
         );
+
+        // High Score button
+        highScoreButton = new Rect(
+                centerX - buttonWidth / 2,
+                screenHeight / 2 + 2 * buttonHeight + 100,
+                centerX + buttonWidth / 2,
+                screenHeight / 2 + 3 * buttonHeight + 100
+        );
     }
 
     public void draw(Canvas canvas) {
         // Vẽ tiêu đề "Game Over"
-        canvas.drawText("Game Over", screenWidth / 2, screenHeight / 3, titlePaint);
+        canvas.drawText("Game Over", screenWidth / 2, screenHeight / 4, titlePaint);
+
+        // Vẽ thông tin Score và Time
+        String scoreText = "Score: " + finalScore;
+        String timeText = "Time: " + formatTime(finalTimeSeconds);
+
+        canvas.drawText(scoreText, screenWidth / 2, screenHeight / 3, infoPaint);
+        canvas.drawText(timeText, screenWidth / 2, screenHeight / 3 + 80, infoPaint);
 
         // Vẽ button Restart
         canvas.drawRect(restartButton, buttonPaint);
@@ -76,6 +96,17 @@ public class GameOver {
         // Vẽ button Menu
         canvas.drawRect(menuButton, buttonPaint);
         drawCenteredText(canvas, menuButton, "Menu", textPaint);
+
+        // Vẽ button High Score
+        canvas.drawRect(highScoreButton, buttonPaint);
+        drawCenteredText(canvas, highScoreButton, "High Score", textPaint);
+    }
+
+    // Format time từ giây sang mm:ss
+    private String formatTime(long totalSeconds) {
+        long minutes = totalSeconds / 60;
+        long seconds = totalSeconds % 60;
+        return String.format("%02d:%02d", minutes, seconds);
     }
 
     // Hàm hỗ trợ vẽ text căn giữa trong rect
@@ -92,4 +123,16 @@ public class GameOver {
     public boolean isMenuPressed(float x, float y) {
         return menuButton.contains((int)x, (int)y);
     }
+
+    public boolean isHighScorePressed(float x, float y) {
+        return highScoreButton.contains((int) x, (int) y);
+    }
+
+    public void setFinalScore(int s) {
+        this.finalScore = s;
+    }
+    public void setFinalTime(long tSeconds) {
+        this.finalTimeSeconds = tSeconds;
+    }
 }
+
