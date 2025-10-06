@@ -6,7 +6,7 @@ import android.graphics.Rect;
 import com.example.androidstudio2dgamedevelopment.graphics.Sprite;
 import com.example.androidstudio2dgamedevelopment.graphics.SpriteSheet;
 
-class WaterTile extends Tile {
+class WaterTile extends Tile implements TileBehavior {
     private final Sprite sprite;
 
     public WaterTile(SpriteSheet spriteSheet, Rect mapLocationRect) {
@@ -18,4 +18,10 @@ class WaterTile extends Tile {
     public void draw(Canvas canvas) {
         sprite.draw(canvas, mapLocationRect.left, mapLocationRect.top);
     }
+
+    @Override
+    public float getSpeedMultiplier() {
+        return 0.5f; // giảm tốc còn 50%
+    }
 }
+

@@ -5,7 +5,7 @@ import android.graphics.Rect;
 
 import com.example.androidstudio2dgamedevelopment.graphics.SpriteSheet;
 
-abstract class Tile {
+public abstract class Tile {
 
     protected final Rect mapLocationRect;
 

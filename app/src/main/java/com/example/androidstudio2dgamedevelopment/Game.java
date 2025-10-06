@@ -104,18 +104,17 @@ class Game extends SurfaceView implements SurfaceHolder.Callback {
         joystick = new Joystick(275, 800, 125, 75);
         attack = new Attack(screenWidth - 275, 800); // Position attack button on the right
 
-        // Initialize game objects
         SpriteSheet spriteSheet = new SpriteSheet(context);
-        PlayerAnimator playerAnimator = new PlayerAnimator(spriteSheet.getPlayerSpriteArray());
-        player = new Player(context, joystick, 2*500, 500, 32, playerAnimator);
+        // Initialize Tilemap
+        tilemap = new Tilemap(context,spriteSheet);
 
+        // Initialize game objects
+        PlayerAnimator playerAnimator = new PlayerAnimator(spriteSheet.getPlayerSpriteArray());
+        player = new Player(context, joystick, 2*500, 500, 32, playerAnimator, tilemap);
         enemySprites = spriteSheet.getEnemySpriteArray();
 
         // Initialize display and center it around the player
         gameDisplay = new GameDisplay(screenWidth, screenHeight, player);
-
-        // Initialize Tilemap
-        tilemap = new Tilemap(context,spriteSheet);
 
         // Initialize SoundManager
         soundManager = new SoundManager(context);

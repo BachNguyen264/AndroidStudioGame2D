@@ -100,4 +100,8 @@ public class Tilemap {
         return MapLayout.NUMBER_OF_ROW_TILES * MapLayout.TILE_HEIGHT_PIXELS;
     }
 
+    public Tile getTileAt(int row, int col) {
+        return tilemap[row][col];
+    }
+
 }

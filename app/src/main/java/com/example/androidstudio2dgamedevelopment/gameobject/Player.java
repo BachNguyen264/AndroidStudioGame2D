@@ -5,7 +5,7 @@ import android.graphics.Canvas;
 import android.graphics.Paint;
 
 import androidx.core.content.ContextCompat;
-
+import com.example.androidstudio2dgamedevelopment.map.Tile;
 import com.example.androidstudio2dgamedevelopment.GameDisplay;
 import com.example.androidstudio2dgamedevelopment.GameLoop;
 import com.example.androidstudio2dgamedevelopment.gamepanel.HealthBar;
@@ -13,6 +13,9 @@ import com.example.androidstudio2dgamedevelopment.gamepanel.Joystick;
 import com.example.androidstudio2dgamedevelopment.R;
 import com.example.androidstudio2dgamedevelopment.Utils;
 import com.example.androidstudio2dgamedevelopment.graphics.PlayerAnimator;
+import com.example.androidstudio2dgamedevelopment.map.MapLayout;
+import com.example.androidstudio2dgamedevelopment.map.TileBehavior;
+import com.example.androidstudio2dgamedevelopment.map.Tilemap;
 
 /**
  * Player is the main character of the game, which the user can control with a touch joystick.
@@ -31,18 +34,22 @@ public class Player extends Circle {
     // Thêm biến tạm để lưu kích thước map
     private int mapWidth;
     private int mapHeight;
+    //for map interaction
+    private Tilemap tilemap;
+    private long lastLavaDamageTime = 0;
 
     // Shield properties
     private boolean isShieldActive = false;
     private long shieldEndTimeMs = 0;
     private Paint shieldPaint; // For drawing shield indicator
 
-    public Player(Context context, Joystick joystick, double positionX, double positionY, double radius, PlayerAnimator playerAnimator) {
+    public Player(Context context, Joystick joystick, double positionX, double positionY, double radius, PlayerAnimator playerAnimator,Tilemap tilemap) {
         super(context, ContextCompat.getColor(context, R.color.player), positionX, positionY, radius);
         this.joystick = joystick;
         this.healthBar = new HealthBar(context, this);
         this.playerAnimator = playerAnimator;
         this.playerState = new PlayerState(this);
+        this.tilemap = tilemap;
 
         // Initialize shield paint
         shieldPaint = new Paint();
@@ -52,14 +59,39 @@ public class Player extends Circle {
     }
 
     public void update() {
+        // Xác định tốc độ cơ bản
+        double currentSpeed = MAX_SPEED;
+        // Lấy tile hiện tại
+        Tile currentTile = getCurrentTile();
+        if (currentTile instanceof TileBehavior) {
+            TileBehavior behavior = (TileBehavior) currentTile;
 
+            // Giảm tốc độ nếu là Water
+            currentSpeed *= behavior.getSpeedMultiplier();
+
+            // Trừ máu nếu là Lava
+            int damage = behavior.getDamagePerSecond();
+            if (damage > 0) {
+                long now = System.currentTimeMillis();
+                if (now - lastLavaDamageTime >= 1000) {
+                    takeDamage(damage);
+                    lastLavaDamageTime = now;
+                }
+            }
+        }
         // Update velocity based on actuator of joystick
-        velocityX = joystick.getActuatorX()*MAX_SPEED;
-        velocityY = joystick.getActuatorY()*MAX_SPEED;
+        velocityX = joystick.getActuatorX()*currentSpeed;
+        velocityY = joystick.getActuatorY()*currentSpeed;
 
-        // Update position
-        positionX += velocityX;
-        positionY += velocityY;
+        // Dự đoán vị trí kế tiếp
+        double nextX = positionX + velocityX;
+        double nextY = positionY + velocityY;
+
+        // Nếu tile kế tiếp không chặn → di chuyển
+        if (!willCollide(nextX, nextY)) {
+            positionX = nextX;
+            positionY = nextY;
+        }
 
         // Wrap quanh biên map
         loopPosition();
@@ -99,7 +131,28 @@ public class Player extends Circle {
             if (positionY > mapHeight) positionY -= mapHeight;
         }
     }
+    private Tile getCurrentTile() {
+        int col = (int)(positionX / MapLayout.TILE_WIDTH_PIXELS);
+        int row = (int)(positionY / MapLayout.TILE_HEIGHT_PIXELS);
 
+        row = (row % MapLayout.NUMBER_OF_ROW_TILES + MapLayout.NUMBER_OF_ROW_TILES) % MapLayout.NUMBER_OF_ROW_TILES;
+        col = (col % MapLayout.NUMBER_OF_COLUMN_TILES + MapLayout.NUMBER_OF_COLUMN_TILES) % MapLayout.NUMBER_OF_COLUMN_TILES;
+
+        return tilemap != null ? tilemap.getTileAt(row,col) : null;
+    }
+    private boolean willCollide(double nextX, double nextY) {
+        int col = (int)(nextX / MapLayout.TILE_WIDTH_PIXELS);
+        int row = (int)(nextY / MapLayout.TILE_HEIGHT_PIXELS);
+
+        row = (row % MapLayout.NUMBER_OF_ROW_TILES + MapLayout.NUMBER_OF_ROW_TILES) % MapLayout.NUMBER_OF_ROW_TILES;
+        col = (col % MapLayout.NUMBER_OF_COLUMN_TILES + MapLayout.NUMBER_OF_COLUMN_TILES) % MapLayout.NUMBER_OF_COLUMN_TILES;
+
+        Tile tile = tilemap.getTileAt(row,col);
+        if (tile instanceof TileBehavior) {
+            return ((TileBehavior) tile).isBlocking();
+        }
+        return false;
+    }
     public void draw(Canvas canvas, GameDisplay gameDisplay) {
         playerAnimator.draw(canvas, gameDisplay, this);
 

@@ -6,7 +6,7 @@ import android.graphics.Rect;
 import com.example.androidstudio2dgamedevelopment.graphics.Sprite;
 import com.example.androidstudio2dgamedevelopment.graphics.SpriteSheet;
 
-class TreeTile extends Tile {
+class TreeTile extends Tile implements TileBehavior {
     private final Sprite grassSprite;
     private final Sprite treeSprite;
 
@@ -20,5 +20,10 @@ class TreeTile extends Tile {
     public void draw(Canvas canvas) {
         grassSprite.draw(canvas, mapLocationRect.left, mapLocationRect.top);
         treeSprite.draw(canvas, mapLocationRect.left, mapLocationRect.top);
+    }
+
+    @Override
+    public boolean isBlocking() {
+        return true;
     }
 }
