@@ -115,7 +115,7 @@ class Game extends SurfaceView implements SurfaceHolder.Callback {
         gameDisplay = new GameDisplay(screenWidth, screenHeight, player);
 
         // Initialize Tilemap
-        tilemap = new Tilemap(spriteSheet);
+        tilemap = new Tilemap(context,spriteSheet);
 
         // Initialize SoundManager
         soundManager = new SoundManager(context);
@@ -126,6 +126,8 @@ class Game extends SurfaceView implements SurfaceHolder.Callback {
         // SharedPreferences để lưu High Score
         prefs = context.getSharedPreferences("HIGH_SCORES", Context.MODE_PRIVATE);
         editor = prefs.edit();
+        //map looping for player
+        player.setMapSize(tilemap.getMapWidth(), tilemap.getMapHeight());
     }
 
     private void setNextItemSpawnTime() {
@@ -247,6 +249,7 @@ class Game extends SurfaceView implements SurfaceHolder.Callback {
 
         for (Enemy enemy : enemyList) {
             enemy.draw(canvas, gameDisplay);
+            enemy.drawLoop(canvas, gameDisplay, tilemap.getMapWidth(), tilemap.getMapHeight());
         }
 
         for (Spell spell : spellList) {
@@ -256,6 +259,7 @@ class Game extends SurfaceView implements SurfaceHolder.Callback {
         // Draw items
         for (Item item : itemList) {
             item.draw(canvas, gameDisplay);
+            item.drawLoop(canvas, gameDisplay, tilemap.getMapWidth(), tilemap.getMapHeight());
         }
 
         // Draw game panels

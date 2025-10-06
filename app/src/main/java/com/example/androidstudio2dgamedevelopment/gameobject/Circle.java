@@ -46,6 +46,23 @@ public abstract class Circle extends GameObject {
                 paint
         );
     }
+    public void drawLoop(Canvas canvas, GameDisplay gameDisplay, int mapWidth, int mapHeight) {
+        // Dịch chuyển theo 8 hướng
+        int[] dx = {-mapWidth, 0, mapWidth};
+        int[] dy = {-mapHeight, 0, mapHeight};
+
+        for (int i = 0; i < dx.length; i++) {
+            for (int j = 0; j < dy.length; j++) {
+                if (dx[i] == 0 && dy[j] == 0) continue; // bỏ bản chính
+
+                float drawX = (float) gameDisplay.gameToDisplayCoordinatesX(positionX + dx[i]);
+                float drawY = (float) gameDisplay.gameToDisplayCoordinatesY(positionY + dy[j]);
+
+                canvas.drawCircle(drawX, drawY, (float) radius, paint);
+            }
+        }
+    }
+
 
     public double getRadius() {
         return radius;

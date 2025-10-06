@@ -15,7 +15,7 @@ public class SpriteSheet {
     public SpriteSheet(Context context) {
         BitmapFactory.Options bitmapOptions = new BitmapFactory.Options();
         bitmapOptions.inScaled = false;
-        bitmap = BitmapFactory.decodeResource(context.getResources(), R.drawable.sprite, bitmapOptions);
+        bitmap = BitmapFactory.decodeResource(context.getResources(), R.drawable.spritesheet, bitmapOptions);
     }
 
     public Sprite[] getPlayerSpriteArray() {

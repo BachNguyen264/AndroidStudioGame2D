@@ -28,6 +28,9 @@ public class Player extends Circle {
     private PlayerAnimator playerAnimator;
     private PlayerState playerState;
     private boolean facingRight = false;
+    // Thêm biến tạm để lưu kích thước map
+    private int mapWidth;
+    private int mapHeight;
 
     // Shield properties
     private boolean isShieldActive = false;
@@ -58,6 +61,9 @@ public class Player extends Circle {
         positionX += velocityX;
         positionY += velocityY;
 
+        // Wrap quanh biên map
+        loopPosition();
+
         // Update direction
         if (velocityX != 0 || velocityY != 0) {
             // Normalize velocity to get direction (unit vector of velocity)
@@ -78,6 +84,20 @@ public class Player extends Circle {
         }
 
         playerState.update();
+    }
+
+    // Hàm mới để set giá trị map
+    public void setMapSize(int mapWidth, int mapHeight) {
+        this.mapWidth = mapWidth;
+        this.mapHeight = mapHeight;
+    }
+    public void loopPosition() {
+        if (mapWidth > 0 && mapHeight > 0) {
+            if (positionX < 0) positionX += mapWidth;
+            if (positionX > mapWidth) positionX -= mapWidth;
+            if (positionY < 0) positionY += mapHeight;
+            if (positionY > mapHeight) positionY -= mapHeight;
+        }
     }
 
     public void draw(Canvas canvas, GameDisplay gameDisplay) {

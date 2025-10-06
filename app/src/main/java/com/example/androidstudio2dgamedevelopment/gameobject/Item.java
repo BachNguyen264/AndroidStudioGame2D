@@ -47,6 +47,11 @@ public abstract class Item extends Circle {
             super.draw(canvas, gameDisplay);
         }
     }
+    @Override
+    public void drawLoop(Canvas canvas, GameDisplay gameDisplay, int mapWidth, int mapHeight) {
+        if (isCollected) return;
+        super.drawLoop(canvas, gameDisplay, mapWidth, mapHeight);
+    }
 
     // You might want to add an update method if items have animations or movement
     // public void update() { }

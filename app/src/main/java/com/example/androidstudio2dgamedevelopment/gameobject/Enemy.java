@@ -101,5 +101,28 @@ public class Enemy extends Circle {
             super.draw(canvas, gameDisplay); // fallback nếu chưa có sprite
         }
     }
+    @Override
+    public void drawLoop(Canvas canvas, GameDisplay gameDisplay, int mapWidth, int mapHeight) {
+        int[] dx = {-mapWidth, 0, mapWidth};
+        int[] dy = {-mapHeight, 0, mapHeight};
+
+        for (int i = 0; i < dx.length; i++) {
+            for (int j = 0; j < dy.length; j++) {
+                if (dx[i] == 0 && dy[j] == 0) continue;
+
+                double loopX = positionX + dx[i];
+                double loopY = positionY + dy[j];
+
+                if (animator != null) {
+                    animator.drawAt(canvas, gameDisplay, loopX, loopY);
+                } else {
+                    // fallback - vẽ hình tròn cơ bản (trường hợp không có sprite)
+                    float drawX = (float) gameDisplay.gameToDisplayCoordinatesX(loopX);
+                    float drawY = (float) gameDisplay.gameToDisplayCoordinatesY(loopY);
+                    canvas.drawCircle(drawX, drawY, (float) radius, paint);
+                }
+            }
+        }
+    }
 }
 

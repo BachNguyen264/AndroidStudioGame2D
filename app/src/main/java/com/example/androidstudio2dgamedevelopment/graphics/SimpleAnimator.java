@@ -34,6 +34,16 @@ public class SimpleAnimator {
         );
     }
 
+    public void drawAt(Canvas canvas, GameDisplay gameDisplay, double posX, double posY) {
+        Sprite sprite = spriteArray[currentFrameIndex];
+        sprite.draw(
+                canvas,
+                (int) gameDisplay.gameToDisplayCoordinatesX(posX) - sprite.getWidth() / 2,
+                (int) gameDisplay.gameToDisplayCoordinatesY(posY) - sprite.getHeight() / 2
+        );
+    }
+
+
     private void toggleFrame() {
         currentFrameIndex++;
         if (currentFrameIndex >= spriteArray.length) {

@@ -1,5 +1,6 @@
 package com.example.androidstudio2dgamedevelopment.map;
 
+import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Rect;
@@ -19,8 +20,8 @@ public class Tilemap {
     private SpriteSheet spriteSheet;
     private Bitmap mapBitmap;
 
-    public Tilemap(SpriteSheet spriteSheet) {
-        mapLayout = new MapLayout();
+    public Tilemap(Context context, SpriteSheet spriteSheet) {
+        mapLayout = new MapLayout(context);
         this.spriteSheet = spriteSheet;
         initializeTilemap();
     }
@@ -65,12 +66,30 @@ public class Tilemap {
     }
 
     public void draw(Canvas canvas, GameDisplay gameDisplay) {
-        canvas.drawBitmap(
-            mapBitmap,
-                gameDisplay.getGameRect(),
-                gameDisplay.DISPLAY_RECT,
-                null
-        );
+        int mapWidth = getMapWidth();
+        int mapHeight = getMapHeight();
+
+        Rect gameRect = gameDisplay.getGameRect();
+
+        // Vẽ map chính
+        canvas.drawBitmap(mapBitmap, gameRect, gameDisplay.DISPLAY_RECT, null);
+
+        // Vẽ thêm 8 map phụ (loop)
+        int[] offsetX = {-mapWidth, 0, mapWidth};
+        int[] offsetY = {-mapHeight, 0, mapHeight};
+
+        for (int dx : offsetX) {
+            for (int dy : offsetY) {
+                if (dx == 0 && dy == 0) continue;
+                Rect shiftedRect = new Rect(
+                        gameRect.left - dx,
+                        gameRect.top - dy,
+                        gameRect.right - dx,
+                        gameRect.bottom - dy
+                );
+                canvas.drawBitmap(mapBitmap, shiftedRect, gameDisplay.DISPLAY_RECT, null);
+            }
+        }
     }
 
     public int getMapWidth() {
