@@ -29,6 +29,7 @@ public class Enemy extends Circle {
     private SimpleAnimator animator;   // 🎯 thêm animator
     private boolean isFrozen  = false;
     private long freezeEndTimeMs  = 0;
+    private double dynamicSpeed = MAX_SPEED;
 
     public Enemy(Context context, Player player, double positionX, double positionY, double radius, SimpleAnimator animator) {
         super(context, ContextCompat.getColor(context, R.color.enemy), positionX, positionY, radius);
@@ -53,19 +54,34 @@ public class Enemy extends Circle {
         this.animator = animator;
     }
 
+    public Enemy(Context context, Player player, SimpleAnimator animator, double speed, int health) {
+        super(context, ContextCompat.getColor(context, R.color.enemy),
+                Math.random() * 1000,
+                Math.random() * 1000,
+                30);
+        this.player = player;
+        this.animator = animator;
+        this.healthPoints = health;
+        this.dynamicSpeed = speed / GameLoop.MAX_UPS;
+    }
+
+
     /**
      * readyToSpawn checks if a new enemy should spawn, according to the decided number of spawns
      * per minute (see SPAWNS_PER_MINUTE at top)
      * @return
      */
-    public static boolean readyToSpawn() {
+    public static boolean readyToSpawn(double spawnMultiplier) {
         if (updatesUntilNextSpawn <= 0) {
-            updatesUntilNextSpawn += UPDATES_PER_SPAWN;
+            updatesUntilNextSpawn += UPDATES_PER_SPAWN / spawnMultiplier;
             return true;
         } else {
-            updatesUntilNextSpawn --;
+            updatesUntilNextSpawn--;
             return false;
         }
+    }
+    public static double getBaseSpeed() {
+        return SPEED_PIXELS_PER_SECOND;
     }
 
     public void update() {
@@ -92,8 +108,8 @@ public class Enemy extends Circle {
 
         // Set velocity in the direction to the player
         if(distanceToPlayer > 0) { // Avoid division by zero
-            velocityX = directionX*MAX_SPEED;
-            velocityY = directionY*MAX_SPEED;
+            velocityX = directionX*dynamicSpeed;
+            velocityY = directionY*dynamicSpeed;
         } else {
             velocityX = 0;
             velocityY = 0;

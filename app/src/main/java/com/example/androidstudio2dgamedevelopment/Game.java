@@ -76,6 +76,7 @@ public class Game extends SurfaceView implements SurfaceHolder.Callback {
     private static final int ENEMY_SCORE = 10;
     private static final int ITEM_SCORE = 5;
     private boolean hasSavedScore = false;
+    private DifficultyManager difficultyManager;
 
     public Game(Context context) {
         super(context);
@@ -121,6 +122,8 @@ public class Game extends SurfaceView implements SurfaceHolder.Callback {
         editor = prefs.edit();
         //map looping for player
         player.setMapSize(tilemap.getMapWidth(), tilemap.getMapHeight());
+        //diff
+        difficultyManager = new DifficultyManager();
     }
 
     private void setNextItemSpawnTime() {
@@ -296,12 +299,16 @@ public class Game extends SurfaceView implements SurfaceHolder.Callback {
         joystick.update();
         player.update();
         gameTimer.update();
+        difficultyManager.update(gameTimer.getElapsedTimeSeconds());
         attack.updateCooldown((long) (1000.0 / GameLoop.MAX_UPS));
 
 
         // Spawn enemy
-        if(Enemy.readyToSpawn()) {
-            enemyList.add(new Enemy(getContext(), player,new SimpleAnimator(enemySprites, 5)));
+        if(Enemy.readyToSpawn(difficultyManager.getSpawnMultiplier())) {
+            double speed = Enemy.getBaseSpeed() * difficultyManager.getSpeedMultiplier();
+            int health = (int)(Enemy.MAX_HEALTH_POINTS * difficultyManager.getHealthMultiplier());
+
+            enemyList.add(new Enemy(getContext(), player, new SimpleAnimator(enemySprites, 5), speed, health));
         }
 
         // Spawn items
