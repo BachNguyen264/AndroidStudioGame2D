@@ -5,6 +5,8 @@ import android.graphics.Canvas;
 import android.graphics.Paint;
 
 import androidx.core.content.ContextCompat;
+
+import com.example.androidstudio2dgamedevelopment.audio.SoundManager;
 import com.example.androidstudio2dgamedevelopment.map.Tile;
 import com.example.androidstudio2dgamedevelopment.GameDisplay;
 import com.example.androidstudio2dgamedevelopment.GameLoop;
@@ -24,7 +26,7 @@ import com.example.androidstudio2dgamedevelopment.map.Tilemap;
 public class Player extends Circle {
     public static final double SPEED_PIXELS_PER_SECOND = 400.0;
     private static final double MAX_SPEED = SPEED_PIXELS_PER_SECOND / GameLoop.MAX_UPS;
-    public static final int MAX_HEALTH_POINTS = 5;
+    public static final int MAX_HEALTH_POINTS = 10;
     private Joystick joystick;
     private HealthBar healthBar;
     private int healthPoints = MAX_HEALTH_POINTS;
@@ -42,6 +44,7 @@ public class Player extends Circle {
     private boolean isShieldActive = false;
     private long shieldEndTimeMs = 0;
     private Paint shieldPaint; // For drawing shield indicator
+    private SoundManager soundManager;
 
     public Player(Context context, Joystick joystick, double positionX, double positionY, double radius, PlayerAnimator playerAnimator,Tilemap tilemap) {
         super(context, ContextCompat.getColor(context, R.color.player), positionX, positionY, radius);
@@ -56,6 +59,7 @@ public class Player extends Circle {
         shieldPaint.setColor(ContextCompat.getColor(context, R.color.shieldActiveColor)); // Define this color
         shieldPaint.setStyle(Paint.Style.STROKE);
         shieldPaint.setStrokeWidth(10); // Adjust as needed
+        soundManager = new SoundManager(context);
     }
 
     public void update() {
@@ -174,9 +178,6 @@ public class Player extends Circle {
     }
 
     public void setHealthPoint(int healthPoints) {
-        if (isShieldActive) { // If shield is active, player doesn't lose health
-            return;
-        }
         // Only allow positive values
         if (healthPoints >= 0)
             this.healthPoints = healthPoints;
@@ -185,7 +186,14 @@ public class Player extends Circle {
     // Call this method when player collides with an enemy
     public void takeDamage(int damageAmount) {
         if (!isShieldActive) {
-            setHealthPoint(getHealthPoint() - damageAmount);
+            int healthAfterDamage = getHealthPoint() - damageAmount;
+            if(healthAfterDamage < 0){
+                setHealthPoint(0);
+            }
+            else{
+                setHealthPoint(getHealthPoint() - damageAmount);
+            }
+            soundManager.play(SoundManager.SOUND_HIT);
         }
         // If you want shield to absorb one hit and then deactivate:
         /*

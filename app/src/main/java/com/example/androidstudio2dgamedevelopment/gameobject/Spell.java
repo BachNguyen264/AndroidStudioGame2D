@@ -3,12 +3,16 @@ package com.example.androidstudio2dgamedevelopment.gameobject;
 import android.content.Context;
 import androidx.core.content.ContextCompat;
 
+import com.example.androidstudio2dgamedevelopment.Game;
 import com.example.androidstudio2dgamedevelopment.GameLoop;
 import com.example.androidstudio2dgamedevelopment.R;
 
+import java.util.List;
+
 public class Spell extends Circle {
     public static final double SPEED_PIXELS_PER_SECOND = 800.0;
-    private static final double MAX_SPEED = SPEED_PIXELS_PER_SECOND / GameLoop.MAX_UPS;
+    protected static final double MAX_SPEED = SPEED_PIXELS_PER_SECOND / GameLoop.MAX_UPS;
+    protected int damage = 2;
 
     public Spell(Context context, Player spellcaster) {
         super(
@@ -26,5 +30,9 @@ public class Spell extends Circle {
     public void update() {
         positionX = positionX + velocityX;
         positionY = positionY + velocityY;
+    }
+
+    public void onHit(Enemy enemy, List<Enemy> allEnemies) {
+        enemy.takeDamage(damage);
     }
 }

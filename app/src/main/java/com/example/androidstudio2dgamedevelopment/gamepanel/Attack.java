@@ -28,6 +28,18 @@ public class Attack {
     private final int skillButton1CenterY;
     private final int skillButton2CenterX;
     private final int skillButton2CenterY;
+    // Fireball skill cooldown
+    private static final long FIREBALL_COOLDOWN_MS = 5000; // 5s
+    private long fireballCooldownRemaining = 0;
+
+    // Missile skill cooldown
+    private static final long MISSILE_COOLDOWN_MS = 8000; // 8s
+    private long missileCooldownRemaining = 0;
+
+    // Paint cho overlay cooldown
+    private final Paint cooldownOverlayPaint;
+    private final Paint cooldownTextPaint;
+
 
 
     public Attack(int centerX, int centerY) {
@@ -52,6 +64,14 @@ public class Attack {
         skillIconPaint.setColor(Color.BLACK);
         skillIconPaint.setTextSize(40);
         skillIconPaint.setTextAlign(Paint.Align.CENTER);
+        cooldownOverlayPaint = new Paint();
+        cooldownOverlayPaint.setColor(Color.argb(150, 0, 0, 0)); // lớp phủ đen mờ
+
+        cooldownTextPaint = new Paint();
+        cooldownTextPaint.setColor(Color.WHITE);
+        cooldownTextPaint.setTextSize(40);
+        cooldownTextPaint.setTextAlign(Paint.Align.CENTER);
+        cooldownTextPaint.setFakeBoldText(true);
     }
 
     public void draw(Canvas canvas) {
@@ -65,6 +85,26 @@ public class Attack {
         // Draw skill button 2
         canvas.drawCircle(skillButton2CenterX, skillButton2CenterY, skillButtonRadius, skillPaint);
         canvas.drawText("M", skillButton2CenterX, skillButton2CenterY + 15, skillIconPaint); // "M" for Missile
+
+        // === Fireball cooldown ===
+        if (fireballCooldownRemaining > 0) {
+            float progress = (float) fireballCooldownRemaining / FIREBALL_COOLDOWN_MS;
+            // Vẽ overlay mờ che lên nút
+            canvas.drawCircle(skillButton1CenterX, skillButton1CenterY, skillButtonRadius, cooldownOverlayPaint);
+
+            // Hiển thị giây còn lại
+            String timeLeft = String.valueOf((int) Math.ceil(fireballCooldownRemaining / 1000.0));
+            canvas.drawText(timeLeft, skillButton1CenterX, skillButton1CenterY + 15, cooldownTextPaint);
+        }
+
+        // === Missile cooldown ===
+        if (missileCooldownRemaining > 0) {
+            float progress = (float) missileCooldownRemaining / MISSILE_COOLDOWN_MS;
+            canvas.drawCircle(skillButton2CenterX, skillButton2CenterY, skillButtonRadius, cooldownOverlayPaint);
+
+            String timeLeft = String.valueOf((int) Math.ceil(missileCooldownRemaining / 1000.0));
+            canvas.drawText(timeLeft, skillButton2CenterX, skillButton2CenterY + 15, cooldownTextPaint);
+        }
     }
 
     public boolean isMainButtonPressed(double touchX, double touchY) {
@@ -117,4 +157,25 @@ public class Attack {
         this.skillButton2PointerId = isPressed ? pointerId : -1;
     }
     public int getSkillButton2PointerId() { return skillButton2PointerId; }
+    public boolean canCastFireball() {
+        return fireballCooldownRemaining <= 0;
+    }
+    public boolean canCastMissile() {
+        return missileCooldownRemaining <= 0;
+    }
+
+    public void triggerFireballCooldown() {
+        fireballCooldownRemaining = FIREBALL_COOLDOWN_MS;
+    }
+
+    public void triggerMissileCooldown() {
+        missileCooldownRemaining = MISSILE_COOLDOWN_MS;
+    }
+    public void updateCooldown(long deltaTimeMs) {
+        if (fireballCooldownRemaining > 0)
+            fireballCooldownRemaining -= deltaTimeMs;
+        if (missileCooldownRemaining > 0)
+            missileCooldownRemaining -= deltaTimeMs;
+    }
+
 }

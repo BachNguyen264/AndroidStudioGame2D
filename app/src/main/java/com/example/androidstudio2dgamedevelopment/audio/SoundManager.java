@@ -14,6 +14,9 @@ public class SoundManager {
 
     public static final int SOUND_SHOOT = 1;
     public static final int SOUND_HIT = 2;
+    public static final int SOUND_COLLECT = 3;
+    public static final int SOUND_FIREBALL = 4;
+    public static final int SOUND_MISSILE = 5;
     // sau này có thể thêm SOUND_EXPLOSION, SOUND_JUMP, SOUND_RELOAD,...
 
     public SoundManager(Context context) {
@@ -34,6 +37,9 @@ public class SoundManager {
         // load file .wav/.mp3 trong res/raw/
         soundMap.put(SOUND_SHOOT, soundPool.load(context, R.raw.shoot, 1));
         soundMap.put(SOUND_HIT, soundPool.load(context, R.raw.hit, 1));
+        soundMap.put(SOUND_COLLECT, soundPool.load(context, R.raw.collect_item, 1));
+        soundMap.put(SOUND_MISSILE, soundPool.load(context, R.raw.missile, 1));
+        soundMap.put(SOUND_FIREBALL, soundPool.load(context, R.raw.fire_ball, 1));
     }
 
     public void play(int soundType) {
