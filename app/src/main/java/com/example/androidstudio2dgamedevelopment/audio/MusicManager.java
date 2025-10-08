@@ -6,6 +6,7 @@ import android.media.MediaPlayer;
 
 public class MusicManager {
     private static MediaPlayer mediaPlayer;
+    private static float bgmVolume = 1.0f; // mặc định 100%
 
     public static void playBackgroundMusic(Context context, int resId) {
         if (mediaPlayer == null) {
@@ -18,7 +19,7 @@ public class MusicManager {
                             .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
                             .build()
             );
-            mediaPlayer.setVolume(1.0f, 1.0f); // âm lượng 100%
+            setVolume(bgmVolume, bgmVolume); // áp dụng volume hiện tại
             mediaPlayer.start();
         } else if (!mediaPlayer.isPlaying()) {
             mediaPlayer.start();
@@ -40,9 +41,13 @@ public class MusicManager {
     }
 
     public static void setVolume(float left, float right) {
+        bgmVolume = (left + right) / 2; // lưu lại để còn hiển thị trong seekbar
         if (mediaPlayer != null) {
             mediaPlayer.setVolume(left, right);
         }
+    }
+    public static float getVolume() {
+        return bgmVolume;
     }
 }
 

@@ -27,12 +27,14 @@ public class MainActivity extends Activity {
     @Override
     protected void onStart() {
         Log.d("MainActivity.java", "onStart()");
+        MusicManager.playBackgroundMusic(this, R.raw.bg_music);
         super.onStart();
     }
 
     @Override
     protected void onResume() {
         Log.d("MainActivity.java", "onResume()");
+        //game.resumeGame();
         MusicManager.playBackgroundMusic(this, R.raw.bg_music);
         super.onResume();
     }

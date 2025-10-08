@@ -1,0 +1,91 @@
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
+    android:padding="20dp"
+    android:gravity="center"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content">
+
+    <TextView
+        android:text="Setting"
+        android:textSize="20sp"
+        android:gravity="center"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"/>
+
+    <!-- BGM Volume -->
+    <TextView
+        android:text="Nhạc nền (BGM):"
+        android:layout_marginTop="15dp"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"/>
+    <LinearLayout
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content">
+        <ImageView
+            android:src="@drawable/min_volume"
+            android:contentDescription="Volume Min"
+            android:layout_width="30dp"
+            android:layout_height="30dp"
+            android:layout_marginEnd="10dp"/>
+        <SeekBar
+            android:id="@+id/seekBGM"
+            android:layout_width="250dp"
+            android:layout_height="wrap_content"
+            android:max="100"
+            android:progress="100" />
+        <ImageView
+            android:src="@drawable/max_volume"
+            android:contentDescription="Volume Max"
+            android:layout_width="30dp"
+            android:layout_height="30dp"
+            android:layout_marginStart="10dp"/>
+    </LinearLayout>
+
+    <!-- SFX Volume -->
+    <TextView
+        android:text="Hiệu ứng (SFX):"
+        android:layout_marginTop="15dp"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"/>
+    <LinearLayout
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content">
+        <ImageView
+            android:src="@drawable/min_volume"
+            android:contentDescription="Volume Min"
+            android:layout_width="30dp"
+            android:layout_height="30dp"
+            android:layout_marginEnd="10dp"/>
+        <SeekBar
+            android:id="@+id/seekSFX"
+            android:layout_width="250dp"
+            android:layout_height="wrap_content"
+            android:max="100"
+            android:progress="100" />
+        <ImageView
+            android:src="@drawable/max_volume"
+            android:contentDescription="Volume Max"
+            android:layout_width="30dp"
+            android:layout_height="30dp"
+            android:layout_marginStart="10dp"/>
+    </LinearLayout>
+
+    <!-- Buttons -->
+    <Button
+        android:id="@+id/btnResume"
+        android:text="Resume"
+        android:layout_marginTop="20dp"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"/>
+
+    <Button
+        android:id="@+id/btnExit"
+        android:text="Exit"
+        android:layout_marginTop="10dp"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"/>
+</LinearLayout>

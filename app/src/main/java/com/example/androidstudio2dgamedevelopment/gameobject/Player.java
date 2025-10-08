@@ -59,7 +59,7 @@ public class Player extends Circle {
         shieldPaint.setColor(ContextCompat.getColor(context, R.color.shieldActiveColor)); // Define this color
         shieldPaint.setStyle(Paint.Style.STROKE);
         shieldPaint.setStrokeWidth(10); // Adjust as needed
-        soundManager = new SoundManager(context);
+        soundManager = SoundManager.getInstance(context);
     }
 
     public void update() {

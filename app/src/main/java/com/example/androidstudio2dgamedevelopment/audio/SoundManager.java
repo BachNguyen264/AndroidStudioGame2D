@@ -8,29 +8,37 @@ import android.util.SparseIntArray;
 import com.example.androidstudio2dgamedevelopment.R;
 
 public class SoundManager {
+    private static SoundManager instance;
     private SoundPool soundPool;
     private SparseIntArray soundMap;  // lưu id -> soundID
     private Context context;
-
+    // static volume chung cho toàn bộ game
+    private static float sfxVolume = 1.0f;
     public static final int SOUND_SHOOT = 1;
     public static final int SOUND_HIT = 2;
     public static final int SOUND_COLLECT = 3;
     public static final int SOUND_FIREBALL = 4;
     public static final int SOUND_MISSILE = 5;
     // sau này có thể thêm SOUND_EXPLOSION, SOUND_JUMP, SOUND_RELOAD,...
-
-    public SoundManager(Context context) {
-        this.context = context;
-        AudioAttributes audioAttributes = new AudioAttributes.Builder()
-                .setUsage(AudioAttributes.USAGE_GAME)
-                .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
-                .build();
-
+    // Private constructor (chỉ dùng qua getInstance)
+    private SoundManager(Context context) {
+        this.context = context.getApplicationContext(); // tránh leak
         soundPool = new SoundPool.Builder()
-                .setMaxStreams(5) // tối đa 5 âm thanh phát đồng thời
+                .setMaxStreams(5)
+                .setAudioAttributes(new AudioAttributes.Builder()
+                        .setUsage(AudioAttributes.USAGE_GAME)
+                        .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+                        .build())
                 .build();
         soundMap = new SparseIntArray();
         loadSounds();
+    }
+    // Singleton getter
+    public static synchronized SoundManager getInstance(Context context) {
+        if (instance == null) {
+            instance = new SoundManager(context);
+        }
+        return instance;
     }
 
     private void loadSounds() {
@@ -43,14 +51,27 @@ public class SoundManager {
     }
 
     public void play(int soundType) {
+        if (sfxVolume <= 0f) return;  // nếu mute → bỏ qua
         int soundId = soundMap.get(soundType);
         if (soundId != 0) {
-            soundPool.play(soundId, 1, 1, 1, 0, 1);
+            soundPool.play(soundId, sfxVolume, sfxVolume, 1, 0, 1f);
         }
     }
 
+    // static getter & setter
+    public static void setSfxVolume(float volume) {
+        sfxVolume = volume;
+    }
+
+    public static float getSfxVolume() {
+        return sfxVolume;
+    }
+
     public void release() {
-        soundPool.release();
-        soundPool = null;
+        if (soundPool != null) {
+            soundPool.release();
+            soundPool = null;
+        }
+        instance = null; // reset để lần sau tạo lại
     }
 }

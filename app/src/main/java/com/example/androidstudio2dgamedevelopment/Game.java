@@ -1,16 +1,22 @@
 package com.example.androidstudio2dgamedevelopment;
 
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Canvas;
 import android.util.DisplayMetrics;
 import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
+import android.view.View;
+import android.widget.Button;
+import android.widget.SeekBar;
 
+import com.example.androidstudio2dgamedevelopment.audio.MusicManager;
 import com.example.androidstudio2dgamedevelopment.audio.SoundManager;
 import com.example.androidstudio2dgamedevelopment.gameobject.Circle;
 import com.example.androidstudio2dgamedevelopment.gameobject.Enemy;
@@ -28,6 +34,7 @@ import com.example.androidstudio2dgamedevelopment.gamepanel.GameTimer;
 import com.example.androidstudio2dgamedevelopment.gamepanel.Joystick;
 import com.example.androidstudio2dgamedevelopment.gamepanel.Performance;
 import com.example.androidstudio2dgamedevelopment.gamepanel.Score;
+import com.example.androidstudio2dgamedevelopment.gamepanel.SettingButton;
 import com.example.androidstudio2dgamedevelopment.graphics.PlayerAnimator;
 import com.example.androidstudio2dgamedevelopment.graphics.SimpleAnimator;
 import com.example.androidstudio2dgamedevelopment.graphics.Sprite;
@@ -64,6 +71,8 @@ public class Game extends SurfaceView implements SurfaceHolder.Callback {
     private Performance performance;
     private GameDisplay gameDisplay;
     private SoundManager soundManager;
+    private SettingButton settingButton;
+    private boolean isPaused = false;
 
     // Item related variables
     private List<Item> itemList = new ArrayList<Item>();
@@ -98,6 +107,7 @@ public class Game extends SurfaceView implements SurfaceHolder.Callback {
         gameOver = new GameOver(context,screenWidth,screenHeight,score.getScore(), gameTimer.getElapsedTimeSeconds());
         joystick = new Joystick(275, 800, 125, 75);
         attack = new Attack(screenWidth - 275, 800); // Position attack button on the right
+        settingButton = new SettingButton(context, screenWidth, screenHeight);
 
         SpriteSheet spriteSheet = new SpriteSheet(context);
         // Initialize Tilemap
@@ -112,7 +122,7 @@ public class Game extends SurfaceView implements SurfaceHolder.Callback {
         gameDisplay = new GameDisplay(screenWidth, screenHeight, player);
 
         // Initialize SoundManager
-        soundManager = new SoundManager(context);
+        soundManager = SoundManager.getInstance(context);
         setFocusable(true);
 
         // Initialize next item spawn time
@@ -133,6 +143,15 @@ public class Game extends SurfaceView implements SurfaceHolder.Callback {
 
     @Override
     public boolean onTouchEvent(MotionEvent event) {
+        // --- Luôn check SettingButton trước ---
+        if (event.getAction() == MotionEvent.ACTION_DOWN) {
+            float x = event.getX();
+            float y = event.getY();
+            if (settingButton.isPressed(x, y)) {
+                showSettingDialog();
+                return true;
+            }
+        }
         //Game Over
         if (player.getHealthPoint() <= 0) {
             if (event.getAction() == MotionEvent.ACTION_DOWN) {
@@ -142,8 +161,7 @@ public class Game extends SurfaceView implements SurfaceHolder.Callback {
                 if (gameOver.isRestartPressed(x, y)) {
                     restartGame(); // viết hàm reset lại Player, Enemy, Score
                 } else if (gameOver.isMenuPressed(x, y)) {
-                    Intent intent = new Intent(getContext(), MenuActivity.class);
-                    getContext().startActivity(intent);
+                    exitToMenu();
                 } else if (gameOver.isHighScorePressed(x, y)) {
                     Intent intent = new Intent(getContext(), HighScoreActivity.class);
                     getContext().startActivity(intent);
@@ -274,6 +292,8 @@ public class Game extends SurfaceView implements SurfaceHolder.Callback {
         // Vẽ score + timer
         score.draw(canvas);
         gameTimer.draw(canvas);
+        //setting
+        settingButton.draw(canvas);
 
         // Draw Game over if the player is dead
         if (player.getHealthPoint() <= 0) {
@@ -402,7 +422,9 @@ public class Game extends SurfaceView implements SurfaceHolder.Callback {
                 it.remove(); // remove khỏi list sau khi collect
             }
         }
-
+        if (isPaused) {
+            return; // Không update logic khi pause
+        }
         // Update gameDisplay so that it's center is set to the new center of the player's
         // game coordinates
         gameDisplay.update();
@@ -439,6 +461,61 @@ public class Game extends SurfaceView implements SurfaceHolder.Callback {
 
         // Reset item spawn timer
         setNextItemSpawnTime();
+    }
+    private void showSettingDialog() {
+        Context ctx = getContext();
+        if (!(ctx instanceof Activity)) return;
+        Activity activity = (Activity) ctx;
+
+        LayoutInflater inflater = activity.getLayoutInflater();
+        View dialogView = inflater.inflate(R.layout.dialog_setting, null);
+
+        AlertDialog.Builder builder = new AlertDialog.Builder(activity);
+        builder.setView(dialogView);
+        builder.setCancelable(false);
+        AlertDialog dialog = builder.create();
+
+        Button btnResume = dialogView.findViewById(R.id.btnResume);
+        Button btnExit = dialogView.findViewById(R.id.btnExit);
+
+        btnResume.setOnClickListener(v -> {
+            resumeGame();
+            dialog.dismiss();
+        });
+
+        btnExit.setOnClickListener(v -> {
+            dialog.dismiss();
+            exitToMenu();
+        });
+
+        pauseGame();
+        dialog.show();
+
+        // 🎵 BGM (MusicManager)
+        SeekBar seekBGM = dialogView.findViewById(R.id.seekBGM);
+        seekBGM.setProgress((int)(MusicManager.getVolume() * 100));
+        seekBGM.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            @Override
+            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                float volume = progress / 100f;
+                MusicManager.setVolume(volume, volume);
+            }
+            @Override public void onStartTrackingTouch(SeekBar seekBar) {}
+            @Override public void onStopTrackingTouch(SeekBar seekBar) {}
+        });
+
+        // 🔊 SFX (SoundManager)
+        SeekBar seekSFX = dialogView.findViewById(R.id.seekSFX);
+        seekSFX.setProgress((int)(soundManager.getSfxVolume() * 100));
+        seekSFX.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            @Override
+            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                float volume = progress / 100f;
+                soundManager.setSfxVolume(volume);
+            }
+            @Override public void onStartTrackingTouch(SeekBar seekBar) {}
+            @Override public void onStopTrackingTouch(SeekBar seekBar) {}
+        });
     }
     private void saveHighScore(int newScore, long playTimeMillis) {
         List<Integer> scores = new ArrayList<>();
@@ -478,6 +555,38 @@ public class Game extends SurfaceView implements SurfaceHolder.Callback {
         }
 
         editor.apply();
+    }
+    public void exitToMenu() {
+        // Dừng hẳn game loop
+        if (gameLoop != null) {
+            gameLoop.stopLoop();
+            gameLoop = null;
+        }
+
+        // Giải phóng SFX
+        if (soundManager != null) {
+            soundManager.release();
+            soundManager = null;
+        }
+
+        // Mở MenuActivity
+        Context ctx = getContext();
+        if (ctx instanceof Activity) {
+            Activity activity = (Activity) ctx;
+            Intent intent = new Intent(activity, MenuActivity.class);
+            activity.startActivity(intent);
+            activity.finish(); // finish activity hiện tại, tránh game tự play lại
+        }
+    }
+    public void pauseGame() {
+        isPaused = true;
+    }
+
+    public void resumeGame() {
+        isPaused = false;
+    }
+    public boolean isPaused() {
+        return isPaused;
     }
 
     public void pause() {

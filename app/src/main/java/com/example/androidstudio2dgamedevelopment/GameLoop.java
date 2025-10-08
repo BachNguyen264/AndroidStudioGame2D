@@ -56,7 +56,10 @@ public class GameLoop extends Thread{
             try {
                 canvas = surfaceHolder.lockCanvas();
                 synchronized (surfaceHolder) {
-                    game.update();
+                    // --- CHỈ UPDATE KHI GAME KHÔNG PAUSE ---
+                    if (!game.isPaused()) {
+                        game.update();
+                    }
                     updateCount++;
 
                     game.draw(canvas);
@@ -87,7 +90,9 @@ public class GameLoop extends Thread{
 
             // Skip frames to keep up with target UPS
             while(sleepTime < 0 && updateCount < MAX_UPS-1) {
-                game.update();
+                if (!game.isPaused()) {
+                    game.update();
+                }
                 updateCount++;
                 elapsedTime = System.currentTimeMillis() - startTime;
                 sleepTime = (long) (updateCount*UPS_PERIOD - elapsedTime);
