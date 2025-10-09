@@ -328,7 +328,11 @@ public class Game extends SurfaceView implements SurfaceHolder.Callback {
             double speed = Enemy.getBaseSpeed() * difficultyManager.getSpeedMultiplier();
             int health = (int)(Enemy.MAX_HEALTH_POINTS * difficultyManager.getHealthMultiplier());
 
-            enemyList.add(new Enemy(getContext(), player, new SimpleAnimator(enemySprites, 5), speed, health));
+            Enemy enemy = new Enemy(getContext(), player, new SimpleAnimator(enemySprites, 5),
+                    speed, health);
+            enemy.setMapSize(tilemap.getMapWidth(), tilemap.getMapHeight());
+            enemyList.add(enemy);
+
         }
 
         // Spawn items

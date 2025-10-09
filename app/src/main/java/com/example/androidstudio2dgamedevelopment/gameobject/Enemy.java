@@ -30,6 +30,9 @@ public class Enemy extends Circle {
     private boolean isFrozen  = false;
     private long freezeEndTimeMs  = 0;
     private double dynamicSpeed = MAX_SPEED;
+    private int mapWidth;
+    private int mapHeight;
+
 
     public Enemy(Context context, Player player, double positionX, double positionY, double radius, SimpleAnimator animator) {
         super(context, ContextCompat.getColor(context, R.color.enemy), positionX, positionY, radius);
@@ -80,47 +83,64 @@ public class Enemy extends Circle {
             return false;
         }
     }
+    public void setMapSize(int mapWidth, int mapHeight) {
+        this.mapWidth = mapWidth;
+        this.mapHeight = mapHeight;
+    }
+
     public static double getBaseSpeed() {
         return SPEED_PIXELS_PER_SECOND;
     }
 
+    @Override
     public void update() {
         if (isFrozen) {
-            // Hết thời gian đóng băng thì mở lại
             if (System.currentTimeMillis() > freezeEndTimeMs) {
                 unfreeze();
             }
-            return; // Dừng cập nhật (enemy không di chuyển, không tấn công)
+            return;
         }
-        // =========================================================================================
-        //   Update velocity of the enemy so that the velocity is in the direction of the player
-        // =========================================================================================
-        // Calculate vector from enemy to player (in x and y)
-        double distanceToPlayerX = player.getPositionX() - positionX;
-        double distanceToPlayerY = player.getPositionY() - positionY;
 
-        // Calculate (absolute) distance between enemy (this) and player
-        double distanceToPlayer = GameObject.getDistanceBetweenObjects(this, player);
+        // === Wrap-aware distance tính toán ===
+        double dx = player.getPositionX() - positionX;
+        double dy = player.getPositionY() - positionY;
 
-        // Calculate direction from enemy to player
-        double directionX = distanceToPlayerX/distanceToPlayer;
-        double directionY = distanceToPlayerY/distanceToPlayer;
+        // Nếu có map kích thước (đã được set từ Game)
+        if (mapWidth > 0 && mapHeight > 0) {
+            // Chọn hướng ngắn nhất giữa khoảng cách trực tiếp và khoảng cách qua biên
+            if (Math.abs(dx) > mapWidth / 2) {
+                dx -= Math.signum(dx) * mapWidth;
+            }
+            if (Math.abs(dy) > mapHeight / 2) {
+                dy -= Math.signum(dy) * mapHeight;
+            }
+        }
 
-        // Set velocity in the direction to the player
-        if(distanceToPlayer > 0) { // Avoid division by zero
-            velocityX = directionX*dynamicSpeed;
-            velocityY = directionY*dynamicSpeed;
+        // Tính độ dài khoảng cách
+        double distance = Math.sqrt(dx * dx + dy * dy);
+
+        // Cập nhật vận tốc
+        if (distance > 0) {
+            velocityX = (dx / distance) * dynamicSpeed;
+            velocityY = (dy / distance) * dynamicSpeed;
         } else {
             velocityX = 0;
             velocityY = 0;
         }
 
-        // =========================================================================================
-        //   Update position of the enemy
-        // =========================================================================================
+        // Di chuyển
         positionX += velocityX;
         positionY += velocityY;
+
+        // === Wrap lại vị trí nếu vượt biên ===
+        if (mapWidth > 0 && mapHeight > 0) {
+            if (positionX < 0) positionX += mapWidth;
+            if (positionX > mapWidth) positionX -= mapWidth;
+            if (positionY < 0) positionY += mapHeight;
+            if (positionY > mapHeight) positionY -= mapHeight;
+        }
     }
+
 
     public void draw(Canvas canvas, GameDisplay gameDisplay) {
         if (animator != null) {
